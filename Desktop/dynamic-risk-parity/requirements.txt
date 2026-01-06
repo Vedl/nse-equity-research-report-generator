@@ -1,0 +1,8 @@
+breeze-connect
+pandas
+numpy
+scikit-learn
+tqdm
+matplotlib
+tensorflow
+joblib

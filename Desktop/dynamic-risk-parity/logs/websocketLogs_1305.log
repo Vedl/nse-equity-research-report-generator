@@ -1,0 +1,56 @@
+2025-12-29 13:35:29,990 - {'message': 'Stock NIFTY subscribed successfully'}
+2025-12-29 13:56:44,534 - {'message': 'Stock NIFTY subscribed successfully'}
+2025-12-29 15:12:33,267 - {'message': 'Stock NIFTY subscribed successfully'}
+2025-12-30 10:05:46,196 - {'message': 'Stock NIFTY subscribed successfully'}
+2025-12-30 10:20:18,415 - {'message': 'Stock NIFTY subscribed successfully'}
+2025-12-30 10:23:13,175 - {'message': 'Stock NIFTY subscribed successfully'}
+2025-12-30 10:29:24,902 - {'message': 'Stock NIFTY subscribed successfully'}
+2025-12-30 10:33:02,966 - {'message': 'Stock NIFTY subscribed successfully'}
+2025-12-30 10:36:43,087 - {'message': 'Stock NIFTY subscribed successfully'}
+2025-12-30 10:44:01,125 - {'message': 'Stock NIFTY subscribed successfully'}
+2025-12-30 11:05:14,316 - {'message': 'Stock NIFTY subscribed successfully'}
+2025-12-30 11:05:14,317 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:05:14,420 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:05:14,525 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:05:14,631 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:05:14,735 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:05:14,839 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:05:14,943 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:05:15,045 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:05:15,150 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:05:15,253 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:26:47,360 - {'message': 'Stock NIFTY subscribed successfully'}
+2025-12-30 11:26:47,360 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:26:47,414 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:26:47,469 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:26:47,524 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:26:47,575 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:26:47,630 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:26:47,682 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:26:47,737 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:26:47,793 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:26:47,847 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:29:59,280 - {'message': 'Stock NIFTY subscribed successfully'}
+2025-12-30 11:29:59,280 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:29:59,334 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:29:59,389 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:29:59,441 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:29:59,496 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:29:59,547 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:29:59,599 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:29:59,652 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:29:59,703 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-30 11:29:59,758 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-31 09:05:51,250 - {'message': 'Stock NIFTY subscribed successfully'}
+2025-12-31 09:05:51,251 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-31 09:05:51,305 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-31 09:05:51,360 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-31 09:05:51,415 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-31 09:05:51,468 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-31 09:05:51,522 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-31 09:05:51,577 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-31 09:05:51,632 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-31 09:05:51,683 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-31 09:05:51,738 - Exception while subscribing to feeds can only concatenate str (not "bool") to str
+2025-12-31 09:15:06,443 - {'message': 'Stock NIFTY subscribed successfully'}
+2025-12-31 09:17:27,929 - {'message': 'Stock NIFTY subscribed successfully'}
