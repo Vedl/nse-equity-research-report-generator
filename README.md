@@ -1,0 +1,1 @@
+# nse-equity-research-report-generator
