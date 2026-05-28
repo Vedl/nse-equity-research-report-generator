@@ -150,12 +150,14 @@ def main(argv: list[str] | None = None) -> int:
         run_dry_run(args.ticker, provider)
         return 0
 
-    # Full report generation (implemented in M5)
-    logger.info(
-        "Full PDF report generation will be available after Milestone 5. "
-        "Run with --dry-run to see normalized data."
-    )
-    run_dry_run(args.ticker, provider)
+    # Full report generation
+    from equity_research.report.builder import generate_report
+    try:
+        out = generate_report(args.ticker, provider, cfg)
+        print(f"\nReport written: {out}")
+    except Exception as exc:   # noqa: BLE001
+        logger.error("Report generation failed: %s", exc)
+        return 1
     return 0
 
 

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+@page {
+  size: A4;
+  margin: 1.8cm 1.5cm 1.6cm 1.5cm;
+  @top-right   { content: "{{ ticker }} — Equity Research"; font-size: 7pt; color: #aaa; }
+  @bottom-right { content: "Page " counter(page) " of " counter(pages); font-size: 7pt; color: #aaa; }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, Helvetica, sans-serif; font-size: 9.5pt; color: #2c2c2c; line-height: 1.4; }
+
+/* ── Typography ──────────────────────────────── */
+h1  { font-size: 17pt; color: #1e3a5f; padding-bottom: 6px; border-bottom: 3px solid #2980b9; margin-bottom: 6px; }
+h2  { font-size: 10.5pt; color: #fff; background: #1e3a5f; padding: 5px 10px; margin: 18px 0 8px; page-break-after: avoid; }
+h3  { font-size: 9.5pt; color: #1e3a5f; border-bottom: 1px solid #c5d5e8; padding-bottom: 3px; margin: 14px 0 6px; page-break-after: avoid; }
+p   { margin-bottom: 6px; }
+
+/* ── Cover ───────────────────────────────────── */
+.cover-meta  { font-size: 8.5pt; color: #666; margin: 3px 0 14px; }
+.stats-grid  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0; }
+.stat-box    { border: 1px solid #c5d5e8; border-radius: 3px; padding: 6px 8px;
+               text-align: center; background: #f0f5fb; }
+.stat-label  { font-size: 7pt; color: #666; text-transform: uppercase; letter-spacing: 0.3px; }
+.stat-value  { font-size: 10.5pt; font-weight: bold; color: #1e3a5f; margin-top: 2px; }
+.biz-summary { background: #f8f9fa; border-left: 3px solid #2980b9;
+               padding: 8px 12px; font-size: 8.5pt; color: #444; margin: 10px 0; }
+
+/* ── Tables ──────────────────────────────────── */
+table  { width: 100%; border-collapse: collapse; margin: 5px 0 12px; font-size: 8.5pt; }
+th     { background: #2c3e50; color: #fff; padding: 5px 8px; text-align: right; font-size: 8pt; }
+th:first-child { text-align: left; }
+td     { padding: 4px 8px; text-align: right; border-bottom: 1px solid #ebebeb; }
+td:first-child { text-align: left; color: #444; }
+tr:nth-child(even) td { background: #f8f9fa; }
+tr.mrow td  { color: #666; font-size: 7.5pt; font-style: italic; }
+tr.total td { font-weight: bold; color: #1e3a5f; border-top: 1px solid #2980b9; }
+
+/* ── Ratio grid ──────────────────────────────── */
+.ratio-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.ratio-box table { margin: 0; }
+
+/* ── Sensitivity ─────────────────────────────── */
+.sens-table { font-size: 8pt; }
+.sens-table th { background: #34495e; text-align: center; padding: 4px 6px; }
+.sens-table td { text-align: center; padding: 3px 6px; font-weight: 500; }
+.s-vhi { background: #27ae60; color: #fff; }
+.s-hi  { background: #a9dfbf; color: #1a5c37; }
+.s-mid { background: #fff; }
+.s-lo  { background: #fad7a0; color: #7d5000; }
+.s-vlo { background: #e74c3c; color: #fff; }
+.s-na  { color: #bbb; }
+
+/* ── Valuation summary ───────────────────────── */
+.val-box   { border: 2px solid #2980b9; border-radius: 4px; padding: 12px 16px;
+             background: #f0f5fb; margin: 10px 0; }
+.up   { color: #27ae60; font-weight: bold; }
+.down { color: #e74c3c; font-weight: bold; }
+.na   { color: #aaa; }
+
+/* ── Charts ──────────────────────────────────── */
+.chart-img { width: 100%; margin: 8px 0; }
+
+/* ── Page control ────────────────────────────── */
+.pb { page-break-before: always; }
+table  { page-break-inside: avoid; }
+
+/* ── Disclaimer ──────────────────────────────── */
+.disclaimer { font-size: 7.5pt; color: #888; border-top: 1px solid #ddd;
+              padding-top: 10px; margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║  1. COVER / COMPANY SNAPSHOT             ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<h1>{{ profile.long_name | default(ticker) }}</h1>
+<p class="cover-meta">
+  {{ profile.sector | default("—") }} &nbsp;|&nbsp; {{ profile.industry | default("—") }}
+  &nbsp;|&nbsp; Report date: {{ report_date }}
+</p>
+
+<div class="stats-grid">
+  <div class="stat-box"><div class="stat-label">Current Price</div><div class="stat-value">{{ snap.current_price }}</div></div>
+  <div class="stat-box"><div class="stat-label">Market Cap</div><div class="stat-value">{{ snap.market_cap }}</div></div>
+  <div class="stat-box"><div class="stat-label">52W High</div><div class="stat-value">{{ snap.high_52w }}</div></div>
+  <div class="stat-box"><div class="stat-label">52W Low</div><div class="stat-value">{{ snap.low_52w }}</div></div>
+  <div class="stat-box"><div class="stat-label">Beta</div><div class="stat-value">{{ snap.beta }}</div></div>
+  <div class="stat-box"><div class="stat-label">Trailing P/E</div><div class="stat-value">{{ snap.pe }}</div></div>
+  <div class="stat-box"><div class="stat-label">Price / Book</div><div class="stat-value">{{ snap.pb }}</div></div>
+  <div class="stat-box"><div class="stat-label">Dividend Yield</div><div class="stat-value">{{ snap.div_yield }}</div></div>
+</div>
+
+{% if profile.long_business_summary %}
+<h3>Business Overview</h3>
+<div class="biz-summary">{{ profile.long_business_summary[:600] }}{% if profile.long_business_summary|length > 600 %}…{% endif %}</div>
+{% endif %}
+
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║  2. FINANCIAL SUMMARY                    ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div class="pb">
+<h2>Financial Summary</h2>
+
+<h3>Income Statement (₹ Crores)</h3>
+<table>
+  <tr><th>Metric</th>{% for y in income_data.years %}<th>{{ y }}</th>{% endfor %}</tr>
+  {% for row in income_data.rows %}
+  <tr{% if row.is_margin %} class="mrow"{% endif %}>
+    <td>{{ row.label }}</td>
+    {% for v in row.vals %}<td>{{ v }}</td>{% endfor %}
+  </tr>
+  {% endfor %}
+</table>
+
+<h3>Balance Sheet Highlights (₹ Crores)</h3>
+<table>
+  <tr><th>Metric</th>{% for y in balance_data.years %}<th>{{ y }}</th>{% endfor %}</tr>
+  {% for row in balance_data.rows %}
+  <tr><td>{{ row.label }}</td>{% for v in row.vals %}<td>{{ v }}</td>{% endfor %}</tr>
+  {% endfor %}
+</table>
+
+<h3>Cash Flow Highlights (₹ Crores)</h3>
+<table>
+  <tr><th>Metric</th>{% for y in cashflow_data.years %}<th>{{ y }}</th>{% endfor %}</tr>
+  {% for row in cashflow_data.rows %}
+  <tr><td>{{ row.label }}</td>{% for v in row.vals %}<td>{{ v }}</td>{% endfor %}</tr>
+  {% endfor %}
+</table>
+</div>
+
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║  3. RATIO ANALYSIS                       ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div class="pb">
+<h2>Ratio Analysis (Most Recent Year)</h2>
+
+<div class="ratio-grid">
+
+  <div class="ratio-box">
+    <h3>Profitability</h3>
+    <table>
+      <tr><th>Metric</th><th>Value</th></tr>
+      <tr><td>Gross Margin</td><td>{{ rfmt.gross_margin }}</td></tr>
+      <tr><td>Operating Margin</td><td>{{ rfmt.operating_margin }}</td></tr>
+      <tr><td>Net Margin</td><td>{{ rfmt.net_margin }}</td></tr>
+      <tr><td>Return on Equity (ROE)</td><td>{{ rfmt.roe }}</td></tr>
+      <tr><td>Return on Invested Capital (ROIC)</td><td>{{ rfmt.roic }}</td></tr>
+    </table>
+  </div>
+
+  <div class="ratio-box">
+    <h3>Liquidity</h3>
+    <table>
+      <tr><th>Metric</th><th>Value</th></tr>
+      <tr><td>Current Ratio</td><td>{{ rfmt.current_ratio }}</td></tr>
+      <tr><td>Quick Ratio</td><td>{{ rfmt.quick_ratio }}</td></tr>
+    </table>
+    <h3>Solvency &amp; Leverage</h3>
+    <table>
+      <tr><th>Metric</th><th>Value</th></tr>
+      <tr><td>Debt / Equity</td><td>{{ rfmt.debt_to_equity }}</td></tr>
+      <tr><td>Interest Coverage</td><td>{{ rfmt.interest_coverage }}</td></tr>
+    </table>
+  </div>
+
+  <div class="ratio-box">
+    <h3>Efficiency</h3>
+    <table>
+      <tr><th>Metric</th><th>Value</th></tr>
+      <tr><td>Asset Turnover</td><td>{{ rfmt.asset_turnover }}</td></tr>
+    </table>
+  </div>
+
+  <div class="ratio-box">
+    <h3>Growth (CAGR)</h3>
+    <table>
+      <tr><th>Metric</th><th>Value</th></tr>
+      <tr><td>Revenue CAGR (3Y)</td><td>{{ rfmt.revenue_3y }}</td></tr>
+      <tr><td>Revenue CAGR (5Y)</td><td>{{ rfmt.revenue_5y }}</td></tr>
+      <tr><td>EPS CAGR (3Y)</td><td>{{ rfmt.eps_3y }}</td></tr>
+      <tr><td>EPS CAGR (5Y)</td><td>{{ rfmt.eps_5y }}</td></tr>
+    </table>
+  </div>
+
+</div><!-- ratio-grid -->
+</div>
+
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║  4. DCF VALUATION                        ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div class="pb">
+<h2>Valuation — Discounted Cash Flow (FCFF)</h2>
+
+{% if dcf %}
+
+<h3>WACC Decomposition</h3>
+<table>
+  <tr><th>Input</th><th>Value</th></tr>
+  <tr><td>Risk-Free Rate</td><td>{{ dcf_fmt.rf }}</td></tr>
+  <tr><td>Equity Risk Premium</td><td>{{ dcf_fmt.erp }}</td></tr>
+  <tr><td>Beta</td><td>{{ dcf_fmt.beta }}</td></tr>
+  <tr><td>Cost of Equity (Ke = Rf + β × ERP)</td><td>{{ dcf_fmt.ke }}</td></tr>
+  <tr><td>Cost of Debt — Pre-Tax</td><td>{{ dcf_fmt.kd_pre }}</td></tr>
+  <tr><td>Tax Rate</td><td>{{ dcf_fmt.tax }}</td></tr>
+  <tr><td>Cost of Debt — After-Tax</td><td>{{ dcf_fmt.kd_post }}</td></tr>
+  <tr><td>Equity Weight (E/V)</td><td>{{ dcf_fmt.eq_wt }}</td></tr>
+  <tr><td>Debt Weight (D/V)</td><td>{{ dcf_fmt.dbt_wt }}</td></tr>
+  <tr class="total"><td>WACC</td><td>{{ dcf_fmt.wacc }}</td></tr>
+</table>
+
+<h3>FCFF Projection &amp; Present Values (₹ Crores)</h3>
+<table>
+  <tr><th>Year</th>{% for r in dcf_proj_table %}<th>{{ r.year }}</th>{% endfor %}<th>Terminal</th></tr>
+  <tr><td>Projected FCFF</td>{% for r in dcf_proj_table %}<td>{{ r.fcff }}</td>{% endfor %}<td>—</td></tr>
+  <tr><td>PV of FCFF</td>{% for r in dcf_proj_table %}<td>{{ r.pv_fcff }}</td>{% endfor %}<td>{{ dcf_fmt.pv_tv }}</td></tr>
+</table>
+<p style="font-size:8pt;color:#666;">
+  Growth rate: {{ dcf_fmt.growth }} p.a. &nbsp;|&nbsp;
+  FCFF margin (base): {{ dcf_fmt.fcff_margin }} &nbsp;|&nbsp;
+  Terminal growth: {{ dcf_fmt.terminal_g }}
+</p>
+
+<h3>Enterprise → Equity → Intrinsic Value</h3>
+<table>
+  <tr><th>Component</th><th>Value (₹ Cr)</th></tr>
+  <tr><td>PV of Projected FCFFs</td><td>{{ dcf_fmt.pv_fcff_sum }}</td></tr>
+  <tr><td>PV of Terminal Value</td><td>{{ dcf_fmt.pv_tv }}</td></tr>
+  <tr class="total"><td>Enterprise Value</td><td>{{ dcf_fmt.ev }}</td></tr>
+  <tr><td>Less: Net Debt</td><td>({{ dcf_fmt.net_debt }})</td></tr>
+  <tr class="total"><td>Equity Value</td><td>{{ dcf_fmt.equity_val }}</td></tr>
+  <tr><td>Shares Outstanding (Cr)</td><td>{{ dcf_fmt.shares }}</td></tr>
+  <tr class="total"><td>Intrinsic Value per Share</td><td>{{ dcf_fmt.intrinsic }}</td></tr>
+  <tr><td>Current Market Price</td><td>{{ snap.current_price }}</td></tr>
+  <tr class="total"><td>Upside / (Downside)</td>
+    <td class="{% if dcf.equity_value > 0 %}up{% else %}down{% endif %}">{{ dcf_fmt.dcf_upside }}</td></tr>
+</table>
+
+<h3>Sensitivity: Intrinsic Value (₹) — WACC vs Terminal Growth</h3>
+<p style="font-size:8pt;color:#666;margin-bottom:6px;">
+  Rows = WACC; Columns = terminal growth rate. Centre cell = base case.
+  <span style="background:#27ae60;color:#fff;padding:1px 5px;border-radius:2px;">green</span> = above base &nbsp;
+  <span style="background:#e74c3c;color:#fff;padding:1px 5px;border-radius:2px;">red</span> = below base.
+</p>
+{{ sensitivity_html }}
+
+{% else %}
+<p class="na">DCF analysis could not be completed (missing required inputs).</p>
+{% endif %}
+</div>
+
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║  5. COMPARABLE COMPANY ANALYSIS          ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div class="pb">
+<h2>Valuation — Comparable Company Analysis</h2>
+
+{% if comps and comps.peers %}
+
+<h3>Peer Trading Multiples</h3>
+<table>
+  <tr><th>Company</th><th>P/E</th><th>EV/EBITDA</th><th>P/B</th><th>EV/Sales</th></tr>
+  {% for pm in comps.peers %}
+  <tr>
+    <td>{{ pm.ticker }}</td>
+    <td>{% if pm.pe %}{{ "%.1f"|format(pm.pe) }}x{% else %}<span class="na">n/a</span>{% endif %}</td>
+    <td>{% if pm.ev_ebitda %}{{ "%.1f"|format(pm.ev_ebitda) }}x{% else %}<span class="na">n/a</span>{% endif %}</td>
+    <td>{% if pm.pb %}{{ "%.1f"|format(pm.pb) }}x{% else %}<span class="na">n/a</span>{% endif %}</td>
+    <td>{% if pm.ev_sales %}{{ "%.1f"|format(pm.ev_sales) }}x{% else %}<span class="na">n/a</span>{% endif %}</td>
+  </tr>
+  {% endfor %}
+  <tr class="total">
+    <td>Median</td>
+    <td>{% if comps.median_pe %}{{ "%.1f"|format(comps.median_pe) }}x{% else %}<span class="na">n/a</span>{% endif %}</td>
+    <td>{% if comps.median_ev_ebitda %}{{ "%.1f"|format(comps.median_ev_ebitda) }}x{% else %}<span class="na">n/a</span>{% endif %}</td>
+    <td>{% if comps.median_pb %}{{ "%.1f"|format(comps.median_pb) }}x{% else %}<span class="na">n/a</span>{% endif %}</td>
+    <td>{% if comps.median_ev_sales %}{{ "%.1f"|format(comps.median_ev_sales) }}x{% else %}<span class="na">n/a</span>{% endif %}</td>
+  </tr>
+</table>
+
+<h3>Implied Value per Share (₹)</h3>
+<table>
+  <tr><th>Method</th><th>Implied Price</th><th>vs Current</th></tr>
+  {% for row in comps_implied_rows %}
+  <tr>
+    <td>{{ row.label }}</td>
+    <td>{{ row.price }}</td>
+    <td class="{{ row.css }}">{{ row.upside }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+{% else %}
+<p class="na">Comparable company analysis could not be completed (no qualifying peers found).</p>
+{% endif %}
+</div>
+
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║  6. VALUATION SUMMARY                    ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<h2>Valuation Summary</h2>
+<div class="val-box">
+  <table>
+    <tr><th>Approach</th><th>Value / Range (₹)</th><th>Upside / (Downside)</th></tr>
+    <tr>
+      <td>DCF (FCFF)</td>
+      <td>{{ vfmt.dcf_price }}</td>
+      <td class="{{ vfmt.dcf_css }}">{{ vfmt.dcf_upside }}</td>
+    </tr>
+    <tr>
+      <td>Comparable Companies (range)</td>
+      <td>{{ vfmt.comps_range }}</td>
+      <td class="{{ vfmt.comps_css }}">{{ vfmt.comps_upside }}</td>
+    </tr>
+    <tr class="total">
+      <td>Current Market Price</td>
+      <td>{{ snap.current_price }}</td>
+      <td>—</td>
+    </tr>
+  </table>
+</div>
+
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║  7. CHARTS                               ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div class="pb">
+<h2>Charts</h2>
+<h3>Price History</h3>
+<img class="chart-img" src="data:image/png;base64,{{ price_chart_b64 }}" alt="Price History">
+<h3>Revenue &amp; Margin Trend</h3>
+<img class="chart-img" src="data:image/png;base64,{{ margin_chart_b64 }}" alt="Revenue and Margin">
+</div>
+
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║  8. ASSUMPTIONS APPENDIX                 ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<div class="pb">
+<h2>Assumptions Appendix</h2>
+<p style="font-size:8pt;color:#666;margin-bottom:8px;">
+  All assumptions below are analyst-adjustable inputs defined in <code>config.yaml</code>.
+  They are illustrative and do not constitute a forecast or recommendation.
+</p>
+<table>
+  <tr><th>Parameter</th><th>Value</th><th>Notes</th></tr>
+  <tr><td>Risk-Free Rate</td><td>{{ dcf_fmt.rf if dcf else "—" }}</td><td>10Y G-Sec yield</td></tr>
+  <tr><td>Equity Risk Premium</td><td>{{ dcf_fmt.erp if dcf else "—" }}</td><td>Damodaran India ERP</td></tr>
+  <tr><td>Corporate Tax Rate</td><td>{{ dcf_fmt.tax if dcf else "—" }}</td><td>Applied to NOPAT &amp; Kd</td></tr>
+  <tr><td>Beta</td><td>{{ dcf_fmt.beta if dcf else "—" }}</td><td>From market data; defaulted to 1.0 if missing</td></tr>
+  <tr><td>WACC</td><td>{{ dcf_fmt.wacc if dcf else "—" }}</td><td>Computed; see decomposition above</td></tr>
+  <tr><td>Projection Horizon</td><td>{{ config.dcf.projection_horizon }} years</td><td></td></tr>
+  <tr><td>Revenue Growth Source</td><td>{{ config.dcf.revenue_growth_source }}</td><td></td></tr>
+  <tr><td>Revenue Growth Rate (used)</td><td>{{ dcf_fmt.growth if dcf else "—" }}</td><td>Applied uniformly across horizon</td></tr>
+  <tr><td>FCFF Margin (base)</td><td>{{ dcf_fmt.fcff_margin if dcf else "—" }}</td><td>3Y average FCFF / Revenue</td></tr>
+  <tr><td>Terminal Growth Rate</td><td>{{ dcf_fmt.terminal_g if dcf else "—" }}</td><td>Gordon growth; must be &lt; WACC</td></tr>
+  <tr><td>Max Peers for Comps</td><td>{{ config.peers.max_peers }}</td><td></td></tr>
+  <tr><td>Price History Period</td><td>{{ config.report.charts.price_history_period }}</td><td></td></tr>
+  <tr><td>Report Currency</td><td>{{ config.report.currency }}</td><td></td></tr>
+</table>
+
+<div class="disclaimer">
+  <strong>NOT INVESTMENT ADVICE.</strong>
+  This report is generated automatically for informational and educational purposes only.
+  All financial data is sourced from publicly available market feeds (yfinance) and may
+  contain errors, omissions, or delays. DCF assumptions and comparable multiples are
+  illustrative analyst inputs, not predictions of future performance.
+  This report does not constitute investment, legal, or financial advice.
+  Past performance is not indicative of future results. Investors should conduct their own
+  due diligence and consult a qualified financial adviser before making any investment decision.
+  The authors and operators of this tool accept no liability for any loss arising from
+  reliance on this report.
+</div>
+</div>
+
+</body>
+</html>
