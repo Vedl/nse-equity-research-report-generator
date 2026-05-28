@@ -111,6 +111,9 @@ _PROFILE_KEYS: list[tuple[str, str]] = [
     ("return_on_equity", "returnOnEquity"),
     ("return_on_assets", "returnOnAssets"),
     ("debt_to_equity", "debtToEquity"),
+    ("trailing_eps", "trailingEps"),
+    ("enterprise_to_ebitda", "enterpriseToEbitda"),
+    ("enterprise_to_revenue", "enterpriseToRevenue"),
 ]
 
 
