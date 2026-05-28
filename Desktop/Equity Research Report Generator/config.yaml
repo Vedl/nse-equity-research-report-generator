@@ -1,0 +1,23 @@
+market:
+  risk_free_rate: 0.068        # 10Y G-Sec yield (as of May 2026)
+  equity_risk_premium: 0.055   # Damodaran India ERP
+  tax_rate: 0.25               # Corporate tax rate (base rate post-2019 cut)
+
+dcf:
+  projection_horizon: 5        # years of explicit FCFF projection
+  terminal_growth_rate: 0.04   # Gordon-growth perpetuity rate
+  revenue_growth_source: historical_cagr   # "historical_cagr" | "manual"
+  # revenue_growth_override: 0.12   # uncomment to override with a fixed annual rate
+
+peers:
+  max_peers: 5
+  # overrides:
+  #   RELIANCE: [ONGC.NS, IOC.NS, BPCL.NS, HPCL.NS]
+  #   HDFCBANK: [ICICIBANK.NS, KOTAKBANK.NS, AXISBANK.NS, SBIN.NS]
+
+report:
+  currency: INR
+  output_dir: ./reports
+  charts:
+    price_history_period: 2y
+    figsize: [10, 4]
