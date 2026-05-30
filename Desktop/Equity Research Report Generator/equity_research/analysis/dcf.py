@@ -259,15 +259,33 @@ def compute_base_fcff(
     income: pd.DataFrame,
     cashflow: pd.DataFrame,
     tax_rate: float,
-    n_avg_years: int = 3,
+    n_avg_years: int = 5,
 ) -> tuple[float, float]:
-    """Derive the base-year FCFF and the average FCFF/Revenue margin.
+    """Derive the normalised base-year FCFF and the implied FCFF/Revenue margin.
 
     FCFF = NOPAT + D&A + CapEx_cf + ΔNWC_cf
     (CapEx_cf < 0 and ΔNWC_cf typically < 0 in the cash-flow statement.)
 
+    Normalisation strategy
+    ----------------------
+    We compute year-by-year FCFF over the last *n_avg_years* (default 5) and
+    take the **median** as the base.  The median is robust to a single year of
+    anomalously high capex or NWC swing.
+
+    Negative-median fallback
+    ~~~~~~~~~~~~~~~~~~~~~~~~
+    For capex-heavy companies mid-investment-cycle (e.g. RELIANCE during Jio
+    buildout), the median FCFF can be negative even though the company is
+    clearly generating value.  In this case we fall back to the **mean of
+    positive-FCFF years** in the window — this is still conservative but
+    avoids projecting negative free cash flow into perpetuity.
+
+    If *all* years in the window have negative FCFF, we return the least-
+    negative year (i.e. max of negatives) and let the downstream
+    ``diverges_materially`` flag handle frontend presentation.
+
     Returns:
-        (base_fcff, fcff_margin) where base_fcff = latest_revenue × avg_margin.
+        (base_fcff, fcff_margin) where fcff_margin = base_fcff / latest_revenue.
 
     Raises:
         ValueError: if there is not enough data to compute at least one year of FCFF.
@@ -298,19 +316,38 @@ def compute_base_fcff(
 
     nopat = frame["op_income"] * (1.0 - tax_rate)
     frame["fcff"] = nopat + frame["da"] + frame["capex"] + frame["nwc"]
-    frame["fcff_margin"] = frame["fcff"] / frame["revenue"]
 
     n_use = min(n_avg_years, len(frame))
-    avg_margin = float(frame["fcff_margin"].iloc[-n_use:].mean())
+    recent_fcff = frame["fcff"].iloc[-n_use:]
+
+    # Primary: median of last n_use years
+    base_fcff = float(recent_fcff.median())
+
+    # Fallback for negative median: use mean of positive-FCFF years
+    if base_fcff <= 0:
+        positive_fcff = recent_fcff[recent_fcff > 0]
+        if not positive_fcff.empty:
+            base_fcff = float(positive_fcff.mean())
+            logger.warning(
+                "Median FCFF is ≤ 0 — falling back to mean of %d positive-FCFF year(s): %.2f",
+                len(positive_fcff), base_fcff,
+            )
+        else:
+            # All years negative — use least-negative (closest to zero)
+            base_fcff = float(recent_fcff.max())
+            logger.warning(
+                "All %d years have negative FCFF — using least-negative: %.2f",
+                n_use, base_fcff,
+            )
 
     latest_revenue = float(frame["revenue"].iloc[-1])
-    base_fcff = latest_revenue * avg_margin
+    fcff_margin = base_fcff / latest_revenue if latest_revenue else 0.0
 
     logger.info(
-        "Base FCFF: last_revenue=%.2f  avg_fcff_margin=%.4f  base_fcff=%.2f",
-        latest_revenue, avg_margin, base_fcff,
+        "Base FCFF (median/%dY): latest_revenue=%.2f  fcff_margin=%.4f  base_fcff=%.2f",
+        n_use, latest_revenue, fcff_margin, base_fcff,
     )
-    return base_fcff, avg_margin
+    return base_fcff, fcff_margin
 
 
 def compute_growth_rates(

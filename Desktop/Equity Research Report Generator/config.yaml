@@ -2,6 +2,7 @@ market:
   risk_free_rate: 0.068        # 10Y G-Sec yield (as of May 2026)
   equity_risk_premium: 0.055   # Damodaran India ERP
   tax_rate: 0.25               # Corporate tax rate (base rate post-2019 cut)
+  fallback_usd_inr: 84.0       # Used only when all live USDINR fetches fail
 
 dcf:
   projection_horizon: 5        # years of explicit FCFF projection

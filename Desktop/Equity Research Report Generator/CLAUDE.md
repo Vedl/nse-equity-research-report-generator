@@ -1,25 +1,15 @@
-# Project: Equity Research Report Generator
-
-## What this is
-A Python tool that generates an equity research report for any Nifty 500 company
-from a single ticker input. Output is a formatted multi-page PDF.
-
-## Conventions
-- Python 3.11+. Use a virtual env. Manage deps with pip + requirements.txt (keep deps minimal).
-- Format with ruff/black. Type hints on all public functions. Docstrings on modules and public functions.
-- Tests with pytest. Every valuation/math function must have unit tests with known-answer cases.
-- Config-driven, not hardcoded: risk-free rate, equity risk premium, tax rate, terminal growth,
-  projection horizon all live in a config file (config.yaml), never as magic numbers in code.
-- Indian-market specifics: NSE tickers use the `.NS` suffix; currency is INR.
-
-## Hard rules
-- NEVER fabricate financial data. If a data field is missing/None from the provider, surface it
-  explicitly (log a warning, mark "n/a" in the report) — do not invent or silently default it.
-- DCF assumptions are illustrative, analyst-adjustable inputs, not "answers." Always print every
-  assumption used and include a sensitivity table. The report carries a "not investment advice" note.
-- Abstract the data source behind an interface so providers can be swapped later.
-
-## Workflow
-- Plan before building. Build milestone by milestone (see plan). After each milestone: run tests,
-  give a 2-line summary, and commit with a clear message. Ask before adding heavy dependencies or
-  making irreversible structural choices.
+---
+Project: Equity Research Report Generator
+Language: Python 3.11+. Virtual env. pip + requirements.txt with pinned versions.
+Style: ruff/black formatting. Type hints on all public functions. Docstrings on modules and classes.
+Tests: pytest. Every valuation/math function needs unit tests with known-answer inputs.
+Config: all assumptions (risk-free rate, ERP, tax rate, terminal growth, projection horizon)
+live in config.yaml — never hardcoded.
+India specifics: NSE tickers use .NS suffix. Currency INR. Tax rate ~25%.
+Rules:
+- NEVER fabricate or default financial data. If a field is missing from yfinance, log a warning
+  and mark it as unavailable in the output — do not invent it.
+- DCF assumptions are analyst inputs, not magic answers. Every assumption used must be printed
+  and included in the PDF appendix. Sensitivity table mandatory.
+- The FastAPI layer must have CORS configured to allow the frontend origin.
+---

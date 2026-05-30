@@ -3,30 +3,12 @@
  * All functions return strings safe for display; null/undefined → "—"
  */
 
-const INR = new Intl.NumberFormat("en-IN", {
-  style: "currency",
-  currency: "INR",
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-})
-
 const USD = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
   minimumFractionDigits: 0,
   maximumFractionDigits: 0,
   notation: "compact",
-})
-
-const PCT = new Intl.NumberFormat("en-IN", {
-  style: "percent",
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-})
-
-const TABULAR = new Intl.NumberFormat("en-IN", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
 })
 
 const CRORE = 1e7 // 1 Cr = 10^7

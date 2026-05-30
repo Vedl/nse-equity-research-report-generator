@@ -18,6 +18,7 @@ class MarketConfig:
     risk_free_rate: float
     equity_risk_premium: float
     tax_rate: float
+    fallback_usd_inr: float = 84.0  # hard fallback when all live USDINR fetches fail
 
 
 @dataclass
@@ -84,6 +85,7 @@ def load_config(path: Path | str = _DEFAULT_CONFIG_PATH) -> AppConfig:
             risk_free_rate=float(mkt["risk_free_rate"]),
             equity_risk_premium=float(mkt["equity_risk_premium"]),
             tax_rate=float(mkt["tax_rate"]),
+            fallback_usd_inr=float(mkt.get("fallback_usd_inr", 84.0)),
         )
 
         d = raw["dcf"]

@@ -27,13 +27,12 @@ compute_wacc (market_cap=1000, debt=400, ie=20, beta=1.2, using config values):
     Kd_pre = 20/400 = 0.05,  Kd_after = 0.05 × (1 − tax)
     WACC = (1000/1400) × Ke + (400/1400) × Kd_after
 
-compute_base_fcff (synthetic fixtures, 2024 row):
-    NOPAT  = 219.615e7 × 0.75   = 164.711e7
-    D&A    =  73.205e7
-    CapEx  = −87.846e7
-    ΔNWC   = −29.282e7
-    FCFF   = 164.711 + 73.205 − 87.846 − 29.282 = 120.788 (×1e7)
-    margin = 120.788 / 1464.10  ≈ 0.0825
+compute_base_fcff (synthetic fixtures, median of 2022-2024):
+    2022 FCFF = 136.125 + 60.5 − 72.6 − 24.2   =  99.825 (×1e7)
+    2023 FCFF = 149.738 + 66.55 − 79.86 − 26.62 = 109.808 (×1e7)
+    2024 FCFF = 164.711 + 73.205 − 87.846 − 29.282 = 120.788 (×1e7)
+    median([99.825, 109.808, 120.788]) = 109.808 (×1e7)
+    margin = 109.808 / 1464.10 ≈ 0.0750
 """
 
 from __future__ import annotations
@@ -403,19 +402,36 @@ def test_compute_base_fcff_known_answer(
     cfg,
 ) -> None:
     """
-    2024 FCFF (hand-computed):
-      NOPAT  = 219.615e7 × 0.75 = 164.711e7
-      D&A    = 73.205e7
-      CapEx  = −87.846e7
-      ΔNWC   = −29.282e7
-      FCFF   = 120.788e7
-      margin ≈ 0.0825
+    Normalised base FCFF = median of last 5 years' actual FCFF values.
+
+    Year-by-year FCFF (hand-computed, all ×1e7):
+      2020: NOPAT=112.500 + D&A=50    + CapEx=-60   + ΔNWC=-20    =  82.500
+      2021: NOPAT=123.750 + D&A=55    + CapEx=-66   + ΔNWC=-22    =  90.750
+      2022: NOPAT=136.125 + D&A=60.5  + CapEx=-72.6 + ΔNWC=-24.2  =  99.825
+      2023: NOPAT=149.738 + D&A=66.55 + CapEx=-79.86+ ΔNWC=-26.62 = 109.808
+      2024: NOPAT=164.711 + D&A=73.205+ CapEx=-87.846+ΔNWC=-29.282= 120.788
+
+    Sorted: [82.500, 90.750, 99.825, 109.808, 120.788]  → median = 99.825e7
+    fcff_margin = 99.825e7 / 1464.1e7 ≈ 0.0682
     """
     base_fcff, margin = compute_base_fcff(
         synthetic_income, synthetic_cashflow, tax_rate=cfg.market.tax_rate
     )
-    assert base_fcff == pytest.approx(120.788e7, rel=1e-3)
-    assert margin == pytest.approx(0.0825, rel=1e-3)
+    assert base_fcff == pytest.approx(99.825e7, rel=1e-3)
+    assert margin == pytest.approx(0.0682, rel=2e-2)
+
+
+def test_compute_base_fcff_3year_explicit(
+    synthetic_income: pd.DataFrame,
+    synthetic_cashflow: pd.DataFrame,
+    cfg,
+) -> None:
+    """With n_avg_years=3, median is the middle of last 3 years: 109.808e7."""
+    base_fcff, _ = compute_base_fcff(
+        synthetic_income, synthetic_cashflow, tax_rate=cfg.market.tax_rate,
+        n_avg_years=3,
+    )
+    assert base_fcff == pytest.approx(109.808e7, rel=1e-3)
 
 
 def test_compute_base_fcff_returns_tuple(
@@ -435,6 +451,24 @@ def test_compute_base_fcff_margin_positive(
 def test_compute_base_fcff_empty_income_raises(synthetic_cashflow, cfg) -> None:
     with pytest.raises(ValueError, match="Insufficient|no usable"):
         compute_base_fcff(pd.DataFrame(), synthetic_cashflow, cfg.market.tax_rate)
+
+
+def test_compute_base_fcff_negative_median_fallback(
+    synthetic_income: pd.DataFrame,
+    negative_fcff_cashflow: pd.DataFrame,
+    cfg,
+) -> None:
+    """When median FCFF is negative, fall back to mean of positive-FCFF years.
+
+    The negative_fcff_cashflow fixture has 3 negative and 2 positive FCFF years.
+    The fallback should return the mean of the 2 positive years, which must
+    be strictly positive.
+    """
+    base_fcff, margin = compute_base_fcff(
+        synthetic_income, negative_fcff_cashflow, tax_rate=cfg.market.tax_rate
+    )
+    assert base_fcff > 0, f"Expected positive fallback FCFF, got {base_fcff}"
+    assert margin > 0
 
 
 # ---------------------------------------------------------------------------

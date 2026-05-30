@@ -98,3 +98,27 @@ def synthetic_profile() -> dict:
         "return_on_assets": 0.05,
         "debt_to_equity": 40.0,          # yfinance returns D/E in % (i.e. 40 means 40%)
     }
+
+
+# ---------------------------------------------------------------------------
+# Negative-FCFF fixtures (simulates capex-heavy companies like RELIANCE)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def negative_fcff_cashflow() -> pd.DataFrame:
+    """Cash flow statement where 3 of 5 years have negative FCFF.
+
+    CapEx is very high (capex-heavy buildout), resulting in negative FCFF
+    for 2020–2022 and slightly positive for 2023–2024.
+    """
+    return pd.DataFrame(
+        {
+            "operating_cash_flow":      [130e7,  143e7,   157.3e7, 173.03e7, 190.333e7],
+            "capital_expenditure":      [-200e7, -220e7,  -242e7,  -79.86e7, -87.846e7],
+            "free_cash_flow":           [-70e7,  -77e7,   -84.7e7, 93.17e7,  102.487e7],
+            "depreciation_amortization": [50e7,   55e7,    60.5e7,  66.55e7,  73.205e7],
+            "change_in_working_capital": [-20e7,  -22e7,  -24.2e7, -26.62e7, -29.282e7],
+        },
+        index=pd.Index(_YEARS, name="year"),
+    )
+

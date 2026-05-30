@@ -106,6 +106,10 @@ export const ResearchSchema = z.object({
         growth_rate: nullableNum.optional(),
         net_debt: nullableNum.optional(),
         shares_outstanding: nullableNum.optional(),
+        // Divergence flag: signals that FCFF DCF deviates >35% from market price.
+        // True for capex-heavy/high-growth companies — not an error, just context.
+        market_divergence_pct: nullableNum.optional(),
+        diverges_materially: z.boolean().optional(),
       })
       .nullable(),
     comps: z.array(

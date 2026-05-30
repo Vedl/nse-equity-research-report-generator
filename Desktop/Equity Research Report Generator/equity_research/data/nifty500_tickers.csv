@@ -1,148 +1,505 @@
 ticker,company_name,sector,industry
-RELIANCE.NS,Reliance Industries,Energy,Oil & Gas Refining & Marketing
-ONGC.NS,Oil & Natural Gas Corporation,Energy,Oil & Gas Exploration & Production
-IOC.NS,Indian Oil Corporation,Energy,Oil & Gas Refining & Marketing
-BPCL.NS,Bharat Petroleum Corporation,Energy,Oil & Gas Refining & Marketing
-HPCL.NS,Hindustan Petroleum Corporation,Energy,Oil & Gas Refining & Marketing
-GAIL.NS,GAIL India,Energy,Oil & Gas Midstream
-PETRONET.NS,Petronet LNG,Energy,Oil & Gas Midstream
-MRPL.NS,Mangalore Refinery and Petrochemicals,Energy,Oil & Gas Refining & Marketing
-CASTROLIND.NS,Castrol India,Energy,Oil & Gas Refining & Marketing
-CHENNPETRO.NS,Chennai Petroleum Corporation,Energy,Oil & Gas Refining & Marketing
-HDFCBANK.NS,HDFC Bank,Financial Services,Banks—Diversified
-ICICIBANK.NS,ICICI Bank,Financial Services,Banks—Diversified
-KOTAKBANK.NS,Kotak Mahindra Bank,Financial Services,Banks—Diversified
-AXISBANK.NS,Axis Bank,Financial Services,Banks—Diversified
-SBIN.NS,State Bank of India,Financial Services,Banks—Diversified
-INDUSINDBK.NS,IndusInd Bank,Financial Services,Banks—Regional
-BANDHANBNK.NS,Bandhan Bank,Financial Services,Banks—Regional
-FEDERALBNK.NS,Federal Bank,Financial Services,Banks—Regional
-IDFCFIRSTB.NS,IDFC First Bank,Financial Services,Banks—Regional
-YESBANK.NS,Yes Bank,Financial Services,Banks—Regional
-RBLBANK.NS,RBL Bank,Financial Services,Banks—Regional
-CSBBANK.NS,CSB Bank,Financial Services,Banks—Regional
-KARURVYSYA.NS,Karur Vysya Bank,Financial Services,Banks—Regional
-SOUTHBANK.NS,South Indian Bank,Financial Services,Banks—Regional
-BAJFINANCE.NS,Bajaj Finance,Financial Services,Credit Services
-MUTHOOTFIN.NS,Muthoot Finance,Financial Services,Credit Services
-M&MFIN.NS,Mahindra & Mahindra Financial Services,Financial Services,Credit Services
-SHRIRAMFIN.NS,Shriram Finance,Financial Services,Credit Services
-CHOLAFIN.NS,Cholamandalam Investment and Finance,Financial Services,Credit Services
-BAJAJFINSV.NS,Bajaj Finserv,Financial Services,Insurance—Diversified
-HDFCLIFE.NS,HDFC Life Insurance,Financial Services,Insurance—Life
-SBILIFE.NS,SBI Life Insurance,Financial Services,Insurance—Life
-LICI.NS,Life Insurance Corporation of India,Financial Services,Insurance—Life
-ICICIGI.NS,ICICI Lombard General Insurance,Financial Services,Insurance—Property & Casualty
-NIACL.NS,New India Assurance,Financial Services,Insurance—Property & Casualty
-STARHEALTH.NS,Star Health and Allied Insurance,Financial Services,Insurance—Property & Casualty
-HDFCAMC.NS,HDFC Asset Management,Financial Services,Asset Management
-NIPPONIND.NS,Nippon India Mutual Fund,Financial Services,Asset Management
-TCS.NS,Tata Consultancy Services,Technology,Information Technology Services
-INFY.NS,Infosys,Technology,Information Technology Services
-WIPRO.NS,Wipro,Technology,Information Technology Services
-HCLTECH.NS,HCL Technologies,Technology,Information Technology Services
-TECHM.NS,Tech Mahindra,Technology,Information Technology Services
-LTIM.NS,LTIMindtree,Technology,Information Technology Services
-MPHASIS.NS,Mphasis,Technology,Information Technology Services
-PERSISTENT.NS,Persistent Systems,Technology,Information Technology Services
-COFORGE.NS,Coforge,Technology,Information Technology Services
-OFSS.NS,Oracle Financial Services Software,Technology,Software—Application
-KPIT.NS,KPIT Technologies,Technology,Software—Application
-CYIENT.NS,Cyient,Technology,Software—Application
-TATAMOTORS.NS,Tata Motors,Consumer Cyclical,Auto Manufacturers
-MARUTI.NS,Maruti Suzuki India,Consumer Cyclical,Auto Manufacturers
-M&M.NS,Mahindra & Mahindra,Consumer Cyclical,Auto Manufacturers
-BAJAJ-AUTO.NS,Bajaj Auto,Consumer Cyclical,Auto Manufacturers
-HEROMOTOCO.NS,Hero MotoCorp,Consumer Cyclical,Auto Manufacturers
-EICHERMOT.NS,Eicher Motors,Consumer Cyclical,Auto Manufacturers
-TVSMOTOR.NS,TVS Motor Company,Consumer Cyclical,Auto Manufacturers
-ASHOKLEY.NS,Ashok Leyland,Consumer Cyclical,Auto Manufacturers
-ESCORTS.NS,Escorts Kubota,Consumer Cyclical,Agricultural & Farm Machinery
-TITAN.NS,Titan Company,Consumer Cyclical,Luxury Goods
-TRENT.NS,Trent,Consumer Cyclical,Department Stores
-VEDL.NS,Vedanta,Consumer Cyclical,Department Stores
-ZOMATO.NS,Zomato,Consumer Cyclical,Restaurants
-JUBLFOOD.NS,Jubilant Foodworks,Consumer Cyclical,Restaurants
-DMART.NS,Avenue Supermarts,Consumer Cyclical,Grocery Stores
-HINDUNILVR.NS,Hindustan Unilever,Consumer Defensive,Household & Personal Products
-NESTLEIND.NS,Nestle India,Consumer Defensive,Packaged Foods
-DABUR.NS,Dabur India,Consumer Defensive,Household & Personal Products
-GODREJCP.NS,Godrej Consumer Products,Consumer Defensive,Household & Personal Products
-MARICO.NS,Marico,Consumer Defensive,Household & Personal Products
-COLPAL.NS,Colgate-Palmolive India,Consumer Defensive,Household & Personal Products
-BRITANNIA.NS,Britannia Industries,Consumer Defensive,Packaged Foods
-ITC.NS,ITC,Consumer Defensive,Tobacco
-EMAMILTD.NS,Emami,Consumer Defensive,Household & Personal Products
-TATACONSUM.NS,Tata Consumer Products,Consumer Defensive,Packaged Foods
-VBL.NS,Varun Beverages,Consumer Defensive,Beverages—Non-Alcoholic
-RADICO.NS,Radico Khaitan,Consumer Defensive,Beverages—Wineries & Distilleries
-SUNPHARMA.NS,Sun Pharmaceutical Industries,Healthcare,Drug Manufacturers—General
-DRREDDY.NS,Dr. Reddy's Laboratories,Healthcare,Drug Manufacturers—General
-CIPLA.NS,Cipla,Healthcare,Drug Manufacturers—General
-DIVISLAB.NS,Divi's Laboratories,Healthcare,Drug Manufacturers—Specialty & Generic
-AUROPHARMA.NS,Aurobindo Pharma,Healthcare,Drug Manufacturers—Specialty & Generic
-TORNTPHARM.NS,Torrent Pharmaceuticals,Healthcare,Drug Manufacturers—General
-ALKEM.NS,Alkem Laboratories,Healthcare,Drug Manufacturers—Specialty & Generic
-LUPIN.NS,Lupin,Healthcare,Drug Manufacturers—General
-BIOCON.NS,Biocon,Healthcare,Biotechnology
-ABBOTINDIA.NS,Abbott India,Healthcare,Drug Manufacturers—General
-PFIZER.NS,Pfizer India,Healthcare,Drug Manufacturers—General
-APOLLOHOSP.NS,Apollo Hospitals Enterprise,Healthcare,Medical Care Facilities
-FORTIS.NS,Fortis Healthcare,Healthcare,Medical Care Facilities
-MAXHEALTH.NS,Max Healthcare Institute,Healthcare,Medical Care Facilities
-TATASTEEL.NS,Tata Steel,Basic Materials,Steel
-JSWSTEEL.NS,JSW Steel,Basic Materials,Steel
-HINDALCO.NS,Hindalco Industries,Basic Materials,Aluminum
-SAIL.NS,Steel Authority of India,Basic Materials,Steel
-NMDC.NS,NMDC,Basic Materials,Other Industrial Metals & Mining
-COALINDIA.NS,Coal India,Basic Materials,Coking Coal
-MOIL.NS,MOIL,Basic Materials,Other Industrial Metals & Mining
-NATIONALUM.NS,National Aluminium Company,Basic Materials,Aluminum
-HINDZINC.NS,Hindustan Zinc,Basic Materials,Other Industrial Metals & Mining
-ULTRACEMCO.NS,UltraTech Cement,Basic Materials,Building Materials
-GRASIM.NS,Grasim Industries,Basic Materials,Building Materials
-AMBUJACEM.NS,Ambuja Cements,Basic Materials,Building Materials
-ACC.NS,ACC,Basic Materials,Building Materials
-SHREECEM.NS,Shree Cement,Basic Materials,Building Materials
-RAMCOCEM.NS,Ramco Cements,Basic Materials,Building Materials
-JKCEMENT.NS,JK Cement,Basic Materials,Building Materials
-PIDILITIND.NS,Pidilite Industries,Basic Materials,Specialty Chemicals
-SRF.NS,SRF,Basic Materials,Specialty Chemicals
-DEEPAKNITR.NS,Deepak Nitrite,Basic Materials,Specialty Chemicals
-ATUL.NS,Atul,Basic Materials,Specialty Chemicals
-LT.NS,Larsen & Toubro,Industrials,Engineering & Construction
-SIEMENS.NS,Siemens India,Industrials,Specialty Industrial Machinery
-ABB.NS,ABB India,Industrials,Specialty Industrial Machinery
-HAVELLS.NS,Havells India,Industrials,Electrical Equipment & Parts
-POLYCAB.NS,Polycab India,Industrials,Electrical Equipment & Parts
-BHEL.NS,Bharat Heavy Electricals,Industrials,Specialty Industrial Machinery
-BEL.NS,Bharat Electronics,Industrials,Aerospace & Defense
-HAL.NS,Hindustan Aeronautics,Industrials,Aerospace & Defense
-CUMMINSIND.NS,Cummins India,Industrials,Specialty Industrial Machinery
-THERMAX.NS,Thermax,Industrials,Specialty Industrial Machinery
-CGPOWER.NS,CG Power and Industrial Solutions,Industrials,Electrical Equipment & Parts
-ADANIPORTS.NS,Adani Ports and Special Economic Zone,Industrials,Marine Shipping
-CONCOR.NS,Container Corporation of India,Industrials,Railroads
-IRCTC.NS,Indian Railway Catering and Tourism,Industrials,Railroads
-POWERGRID.NS,Power Grid Corporation of India,Utilities,Utilities—Regulated Electric
-NTPC.NS,NTPC,Utilities,Utilities—Regulated Electric
-TATAPOWER.NS,Tata Power Company,Utilities,Utilities—Diversified
-ADANIGREEN.NS,Adani Green Energy,Utilities,Utilities—Renewable
-TORNTPOWER.NS,Torrent Power,Utilities,Utilities—Diversified
-CESC.NS,CESC,Utilities,Utilities—Regulated Electric
-JSPL.NS,Jindal Steel and Power,Utilities,Utilities—Diversified
-BHARTIARTL.NS,Bharti Airtel,Communication Services,Telecom Services
-IDEA.NS,Vodafone Idea,Communication Services,Telecom Services
-TATACOMM.NS,Tata Communications,Communication Services,Telecom Services
-INDIAMART.NS,IndiaMART InterMESH,Communication Services,Internet Content & Information
-NAUKRI.NS,Info Edge India,Communication Services,Internet Content & Information
-ZEEL.NS,Zee Entertainment Enterprises,Communication Services,Entertainment
-SUNTV.NS,Sun TV Network,Communication Services,Entertainment
-PVR.NS,PVR INOX,Communication Services,Entertainment
-PRESTIGE.NS,Prestige Estates Projects,Real Estate,Real Estate—Development
-GODREJPROP.NS,Godrej Properties,Real Estate,Real Estate—Development
-OBEROIRLTY.NS,Oberoi Realty,Real Estate,Real Estate—Development
-PHOENIXLTD.NS,Phoenix Mills,Real Estate,Real Estate—Diversified
-DLF.NS,DLF,Real Estate,Real Estate—Development
-SOBHA.NS,Sobha,Real Estate,Real Estate—Development
-BRIGADE.NS,Brigade Enterprises,Real Estate,Real Estate—Development
+360ONE.NS,360 ONE WAM Ltd.,Financial Services,Asset Management
+3MINDIA.NS,3M India Ltd.,Industrials,Conglomerates
+ABB.NS,ABB India Ltd.,Industrials,Specialty Industrial Machinery
+ACC.NS,ACC Ltd.,Basic Materials,Building Materials
+ACMESOLAR.NS,ACME Solar Holdings Ltd.,Utilities,Utilities - Renewable
+AIAENG.NS,AIA Engineering Ltd.,Industrials,Specialty Industrial Machinery
+APLAPOLLO.NS,APL Apollo Tubes Ltd.,Basic Materials,Steel
+AUBANK.NS,AU Small Finance Bank Ltd.,Financial Services,Banks - Regional
+AWL.NS,AWL Agri Business Ltd.,Consumer Defensive,Packaged Foods
+AADHARHFC.NS,Aadhar Housing Finance Ltd.,Financial Services,Mortgage Finance
+AARTIIND.NS,Aarti Industries Ltd.,Basic Materials,Specialty Chemicals
+AAVAS.NS,Aavas Financiers Ltd.,Financial Services,Mortgage Finance
+ABBOTINDIA.NS,Abbott India Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+ACE.NS,Action Construction Equipment Ltd.,Industrials,Farm & Heavy Construction Machinery
+ACUTAAS.NS,Acutaas Chemicals Ltd.,Basic Materials,Specialty Chemicals
+ADANIENSOL.NS,Adani Energy Solutions Ltd.,Utilities,Utilities - Independent Power Producers
+ADANIENT.NS,Adani Enterprises Ltd.,Energy,Thermal Coal
+ADANIGREEN.NS,Adani Green Energy Ltd.,Utilities,Utilities - Renewable
+ADANIPORTS.NS,Adani Ports and Special Economic Zone Ltd.,Industrials,Marine Shipping
+ADANIPOWER.NS,Adani Power Ltd.,Utilities,Utilities - Independent Power Producers
+ATGL.NS,Adani Total Gas Ltd.,Utilities,Utilities - Regulated Gas
+ABCAPITAL.NS,Aditya Birla Capital Ltd.,Financial Services,Financial Conglomerates
+ABFRL.NS,Aditya Birla Fashion and Retail Ltd.,Consumer Cyclical,Apparel Manufacturing
+ABLBL.NS,Aditya Birla Lifestyle Brands Ltd.,Consumer Cyclical,Apparel Retail
+ABREL.NS,Aditya Birla Real Estate Ltd.,Real Estate,Real Estate Services
+ABSLAMC.NS,Aditya Birla Sun Life AMC Ltd.,Financial Services,Asset Management
+CPPLUS.NS,Aditya Infotech Ltd.,Industrials,Building Products & Equipment
+AEGISLOG.NS,Aegis Logistics Ltd.,Energy,Oil & Gas Refining & Marketing
+AEGISVOPAK.NS,Aegis Vopak Terminals Ltd.,Energy,Oil & Gas Equipment & Services
+AFCONS.NS,Afcons Infrastructure Ltd.,Industrials,Engineering & Construction
+AFFLE.NS,Affle 3i Ltd.,Communication Services,Advertising Agencies
+AJANTPHARM.NS,Ajanta Pharmaceuticals Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+ALKEM.NS,Alkem Laboratories Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+ABDL.NS,Allied Blenders and Distillers Ltd.,Consumer Defensive,Beverages - Wineries & Distilleries
+ARE&M.NS,Amara Raja Energy & Mobility Ltd.,Industrials,Electrical Equipment & Parts
+AMBER.NS,Amber Enterprises India Ltd.,Consumer Cyclical,"Furnishings, Fixtures & Appliances"
+AMBUJACEM.NS,Ambuja Cements Ltd.,Basic Materials,Building Materials
+ANANDRATHI.NS,Anand Rathi Wealth Ltd.,Financial Services,Asset Management
+ANANTRAJ.NS,Anant Raj Ltd.,Real Estate,Real Estate - Development
+ANGELONE.NS,Angel One Ltd.,Financial Services,Capital Markets
+ANTHEM.NS,Anthem Biosciences Ltd.,Healthcare,Biotechnology
+ANURAS.NS,Anupam Rasayan India Ltd.,Basic Materials,Specialty Chemicals
+APARINDS.NS,Apar Industries Ltd.,Industrials,Electrical Equipment & Parts
+APOLLOHOSP.NS,Apollo Hospitals Enterprise Ltd.,Healthcare,Medical Care Facilities
+APOLLOTYRE.NS,Apollo Tyres Ltd.,Consumer Cyclical,Auto Parts
+APTUS.NS,Aptus Value Housing Finance India Ltd.,Financial Services,Mortgage Finance
+ASAHIINDIA.NS,Asahi India Glass Ltd.,Consumer Cyclical,Auto Parts
+ASHOKLEY.NS,Ashok Leyland Ltd.,Industrials,Farm & Heavy Construction Machinery
+ASIANPAINT.NS,Asian Paints Ltd.,Basic Materials,Specialty Chemicals
+ASTERDM.NS,Aster DM Healthcare Ltd.,Healthcare,Medical Care Facilities
+ASTRAL.NS,Astral Ltd.,Industrials,Building Products & Equipment
+ATHERENERG.NS,Ather Energy Ltd.,Consumer Cyclical,Auto Manufacturers
+ATUL.NS,Atul Ltd.,Basic Materials,Specialty Chemicals
+AUROPHARMA.NS,Aurobindo Pharma Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+AIIL.NS,Authum Investment & Infrastructure Ltd.,Financial Services,Capital Markets
+DMART.NS,Avenue Supermarts Ltd.,Consumer Defensive,Discount Stores
+AXISBANK.NS,Axis Bank Ltd.,Financial Services,Banks - Regional
+BEML.NS,BEML Ltd.,Industrials,Conglomerates
+BLS.NS,BLS International Services Ltd.,Industrials,Specialty Business Services
+BSE.NS,BSE Ltd.,Financial Services,Financial Data & Stock Exchanges
+BAJAJ-AUTO.NS,Bajaj Auto Ltd.,Consumer Cyclical,Auto Manufacturers
+BAJFINANCE.NS,Bajaj Finance Ltd.,Financial Services,Credit Services
+BAJAJFINSV.NS,Bajaj Finserv Ltd.,Financial Services,Financial Conglomerates
+BAJAJHLDNG.NS,Bajaj Holdings & Investment Ltd.,Financial Services,Asset Management
+BAJAJHFL.NS,Bajaj Housing Finance Ltd.,Financial Services,Mortgage Finance
+BALKRISIND.NS,Balkrishna Industries Ltd.,Consumer Cyclical,Auto Parts
+BALRAMCHIN.NS,Balrampur Chini Mills Ltd.,Consumer Defensive,Confectioners
+BANDHANBNK.NS,Bandhan Bank Ltd.,Financial Services,Banks - Regional
+BANKBARODA.NS,Bank of Baroda,Financial Services,Banks - Regional
+BANKINDIA.NS,Bank of India,Financial Services,Banks - Regional
+MAHABANK.NS,Bank of Maharashtra,Financial Services,Banks - Regional
+BATAINDIA.NS,Bata India Ltd.,Consumer Cyclical,Footwear & Accessories
+BAYERCROP.NS,Bayer Cropscience Ltd.,Basic Materials,Agricultural Inputs
+BELRISE.NS,Belrise Industries Ltd.,Consumer Cyclical,Auto Parts
+BERGEPAINT.NS,Berger Paints India Ltd.,Basic Materials,Specialty Chemicals
+BDL.NS,Bharat Dynamics Ltd.,Industrials,Aerospace & Defense
+BEL.NS,Bharat Electronics Ltd.,Industrials,Aerospace & Defense
+BHARATFORG.NS,Bharat Forge Ltd.,Consumer Cyclical,Auto Parts
+BHEL.NS,Bharat Heavy Electricals Ltd.,Industrials,Specialty Industrial Machinery
+BPCL.NS,Bharat Petroleum Corporation Ltd.,Energy,Oil & Gas Refining & Marketing
+BHARTIARTL.NS,Bharti Airtel Ltd.,Communication Services,Telecom Services
+BHARTIHEXA.NS,Bharti Hexacom Ltd.,Communication Services,Telecom Services
+BIKAJI.NS,Bikaji Foods International Ltd.,Consumer Defensive,Packaged Foods
+GROWW.NS,Billionbrains Garage Ventures Ltd.,Financial Services,Capital Markets
+BIOCON.NS,Biocon Ltd.,Healthcare,Biotechnology
+BSOFT.NS,Birlasoft Ltd.,Technology,Information Technology Services
+BLUEDART.NS,Blue Dart Express Ltd.,Industrials,Integrated Freight & Logistics
+BLUEJET.NS,Blue Jet Healthcare Ltd.,Healthcare,Biotechnology
+BLUESTARCO.NS,Blue Star Ltd.,Industrials,Building Products & Equipment
+BBTC.NS,Bombay Burmah Trading Corporation Ltd.,Consumer Defensive,Packaged Foods
+BOSCHLTD.NS,Bosch Ltd.,Consumer Cyclical,Auto Parts
+FIRSTCRY.NS,Brainbees Solutions Ltd.,Consumer Cyclical,Internet Retail
+BRIGADE.NS,Brigade Enterprises Ltd.,Real Estate,Real Estate - Development
+BRITANNIA.NS,Britannia Industries Ltd.,Consumer Defensive,Packaged Foods
+MAPMYINDIA.NS,C.E. Info Systems Ltd.,Technology,Software - Infrastructure
+CCL.NS,CCL Products (I) Ltd.,Consumer Defensive,Packaged Foods
+CESC.NS,CESC Ltd.,Utilities,Utilities - Regulated Electric
+CGPOWER.NS,CG Power and Industrial Solutions Ltd.,Industrials,Electrical Equipment & Parts
+CIEINDIA.NS,CIE Automotive India Ltd.,Consumer Cyclical,Auto Parts
+CRISIL.NS,CRISIL Ltd.,Financial Services,Financial Data & Stock Exchanges
+CANFINHOME.NS,Can Fin Homes Ltd.,Financial Services,Mortgage Finance
+CANBK.NS,Canara Bank,Financial Services,Banks - Regional
+CANHLIFE.NS,Canara HSBC Life Insurance Company Ltd.,Financial Services,Insurance - Life
+CAPLIPOINT.NS,Caplin Point Laboratories Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+CGCL.NS,Capri Global Capital Ltd.,Financial Services,Credit Services
+CARBORUNIV.NS,Carborundum Universal Ltd.,Industrials,Conglomerates
+CARTRADE.NS,Cartrade Tech Ltd.,Consumer Cyclical,Auto & Truck Dealerships
+CASTROLIND.NS,Castrol India Ltd.,Energy,Oil & Gas Refining & Marketing
+CEATLTD.NS,Ceat Ltd.,Consumer Cyclical,Auto Parts
+CEMPRO.NS,Cemindia Projects Ltd.,Industrials,Engineering & Construction
+CENTRALBK.NS,Central Bank of India,Financial Services,Banks - Regional
+CDSL.NS,Central Depository Services (India) Ltd.,Financial Services,Capital Markets
+CHALET.NS,Chalet Hotels Ltd.,Consumer Cyclical,Lodging
+CHAMBLFERT.NS,Chambal Fertilizers & Chemicals Ltd.,Basic Materials,Agricultural Inputs
+CHENNPETRO.NS,Chennai Petroleum Corporation Ltd.,Energy,Oil & Gas Refining & Marketing
+CHOICEIN.NS,Choice International Ltd.,Financial Services,Capital Markets
+CHOLAHLDNG.NS,Cholamandalam Financial Holdings Ltd.,Financial Services,Credit Services
+CHOLAFIN.NS,Cholamandalam Investment and Finance Company Ltd.,Financial Services,Credit Services
+CIPLA.NS,Cipla Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+CUB.NS,City Union Bank Ltd.,Financial Services,Banks - Regional
+CLEAN.NS,Clean Science and Technology Ltd.,Basic Materials,Specialty Chemicals
+COALINDIA.NS,Coal India Ltd.,Energy,Thermal Coal
+COCHINSHIP.NS,Cochin Shipyard Ltd.,Industrials,Aerospace & Defense
+COFORGE.NS,Coforge Ltd.,Technology,Information Technology Services
+COHANCE.NS,Cohance Lifesciences Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+COLPAL.NS,Colgate Palmolive (India) Ltd.,Consumer Defensive,Household & Personal Products
+CAMS.NS,Computer Age Management Services Ltd.,Technology,Information Technology Services
+CONCORDBIO.NS,Concord Biotech Ltd.,Healthcare,Biotechnology
+CONCOR.NS,Container Corporation of India Ltd.,Industrials,Railroads
+COROMANDEL.NS,Coromandel International Ltd.,Basic Materials,Agricultural Inputs
+CRAFTSMAN.NS,Craftsman Automation Ltd.,Consumer Cyclical,Auto Parts
+CREDITACC.NS,CreditAccess Grameen Ltd.,Financial Services,Credit Services
+CROMPTON.NS,Crompton Greaves Consumer Electricals Ltd.,Consumer Cyclical,"Furnishings, Fixtures & Appliances"
+CUMMINSIND.NS,Cummins India Ltd.,Industrials,Specialty Industrial Machinery
+CYIENT.NS,Cyient Ltd.,Industrials,Conglomerates
+DCMSHRIRAM.NS,DCM Shriram Ltd.,Industrials,Conglomerates
+DLF.NS,DLF Ltd.,Real Estate,Real Estate - Development
+DOMS.NS,DOMS Industries Ltd.,Industrials,Business Equipment & Supplies
+DABUR.NS,Dabur India Ltd.,Consumer Defensive,Household & Personal Products
+DALBHARAT.NS,Dalmia Bharat Ltd.,Basic Materials,Building Materials
+DATAPATTNS.NS,Data Patterns (India) Ltd.,Industrials,Aerospace & Defense
+DEEPAKFERT.NS,Deepak Fertilisers & Petrochemicals Corp. Ltd.,Basic Materials,Chemicals
+DEEPAKNTR.NS,Deepak Nitrite Ltd.,Basic Materials,Chemicals
+DELHIVERY.NS,Delhivery Ltd.,Industrials,Integrated Freight & Logistics
+DEVYANI.NS,Devyani International Ltd.,Consumer Cyclical,Restaurants
+DIVISLAB.NS,Divi's Laboratories Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+DIXON.NS,Dixon Technologies (India) Ltd.,Technology,Consumer Electronics
+LALPATHLAB.NS,Dr. Lal Path Labs Ltd.,Healthcare,Diagnostics & Research
+DRREDDY.NS,Dr. Reddy's Laboratories Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+DUMMYVEDL1.NS,Dummy Vedanta Ltd. 1,Metals & Mining,Metals & Mining
+DUMMYVEDL2.NS,Dummy Vedanta Ltd. 2,Power,Power
+DUMMYVEDL3.NS,Dummy Vedanta Ltd. 3,Oil Gas & Consumable Fuels,Oil Gas & Consumable Fuels
+DUMMYVEDL4.NS,Dummy Vedanta Ltd. 4,Metals & Mining,Metals & Mining
+EIDPARRY.NS,E.I.D. Parry (India) Ltd.,Basic Materials,Agricultural Inputs
+EIHOTEL.NS,EIH Ltd.,Consumer Cyclical,Lodging
+EICHERMOT.NS,Eicher Motors Ltd.,Consumer Cyclical,Auto Manufacturers
+ELECON.NS,Elecon Engineering Co. Ltd.,Industrials,Specialty Industrial Machinery
+ELGIEQUIP.NS,Elgi Equipments Ltd.,Industrials,Specialty Industrial Machinery
+EMAMILTD.NS,Emami Ltd.,Consumer Defensive,Household & Personal Products
+EMCURE.NS,Emcure Pharmaceuticals Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+EMMVEE.NS,Emmvee Photovoltaic Power Ltd.,Technology,Solar
+ENDURANCE.NS,Endurance Technologies Ltd.,Consumer Cyclical,Auto Parts
+ENGINERSIN.NS,Engineers India Ltd.,Industrials,Engineering & Construction
+ERIS.NS,Eris Lifesciences Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+ESCORTS.NS,Escorts Kubota Ltd.,Industrials,Farm & Heavy Construction Machinery
+ETERNAL.NS,Eternal Ltd.,Consumer Cyclical,Internet Retail
+EXIDEIND.NS,Exide Industries Ltd.,Consumer Cyclical,Auto Parts
+NYKAA.NS,FSN E-Commerce Ventures Ltd.,Consumer Cyclical,Internet Retail
+FEDERALBNK.NS,Federal Bank Ltd.,Financial Services,Banks - Regional
+FACT.NS,Fertilisers and Chemicals Travancore Ltd.,Basic Materials,Agricultural Inputs
+FINCABLES.NS,Finolex Cables Ltd.,Industrials,Electrical Equipment & Parts
+FSL.NS,Firstsource Solutions Ltd.,Technology,Information Technology Services
+FIVESTAR.NS,Five-Star Business Finance Ltd.,Financial Services,Credit Services
+FORCEMOT.NS,Force Motors Ltd.,Consumer Cyclical,Auto Manufacturers
+FORTIS.NS,Fortis Healthcare Ltd.,Healthcare,Medical Care Facilities
+GAIL.NS,GAIL (India) Ltd.,Utilities,Utilities - Regulated Gas
+GVT&D.NS,GE Vernova T&D India Ltd.,Industrials,Specialty Industrial Machinery
+GMRAIRPORT.NS,GMR Airports Ltd.,Industrials,Airports & Air Services
+GABRIEL.NS,Gabriel India Ltd.,Consumer Cyclical,Auto Parts
+GALLANTT.NS,Gallantt Ispat Ltd.,Basic Materials,Steel
+GRSE.NS,Garden Reach Shipbuilders & Engineers Ltd.,Industrials,Aerospace & Defense
+GICRE.NS,General Insurance Corporation of India,Financial Services,Insurance - Reinsurance
+GILLETTE.NS,Gillette India Ltd.,Consumer Defensive,Household & Personal Products
+GLAND.NS,Gland Pharma Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+GLAXO.NS,Glaxosmithkline Pharmaceuticals Ltd.,Healthcare,Drug Manufacturers - General
+GLENMARK.NS,Glenmark Pharmaceuticals Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+MEDANTA.NS,Global Health Ltd.,Healthcare,Medical Care Facilities
+GODIGIT.NS,Go Digit General Insurance Ltd.,Financial Services,Insurance - Property & Casualty
+GPIL.NS,Godawari Power & Ispat Ltd.,Basic Materials,Steel
+GODFRYPHLP.NS,Godfrey Phillips India Ltd.,Consumer Defensive,Tobacco
+GODREJCP.NS,Godrej Consumer Products Ltd.,Consumer Defensive,Household & Personal Products
+GODREJIND.NS,Godrej Industries Ltd.,Industrials,Conglomerates
+GODREJPROP.NS,Godrej Properties Ltd.,Real Estate,Real Estate - Development
+GRANULES.NS,Granules India Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+GRAPHITE.NS,Graphite India Ltd.,Industrials,Electrical Equipment & Parts
+GRASIM.NS,Grasim Industries Ltd.,Basic Materials,Building Materials
+GRAVITA.NS,Gravita India Ltd.,Industrials,Metal Fabrication
+GESHIP.NS,Great Eastern Shipping Co. Ltd.,Industrials,Marine Shipping
+FLUOROCHEM.NS,Gujarat Fluorochemicals Ltd.,Basic Materials,Specialty Chemicals
+GMDCLTD.NS,Gujarat Mineral Development Corporation Ltd.,Energy,Thermal Coal
+HEG.NS,H.E.G. Ltd.,Industrials,Electrical Equipment & Parts
+HBLENGINE.NS,HBL Engineering Ltd.,Industrials,Electrical Equipment & Parts
+HCLTECH.NS,HCL Technologies Ltd.,Technology,Information Technology Services
+HDBFS.NS,HDB Financial Services Ltd.,Financial Services,Credit Services
+HDFCAMC.NS,HDFC Asset Management Company Ltd.,Financial Services,Asset Management
+HDFCBANK.NS,HDFC Bank Ltd.,Financial Services,Banks - Regional
+HDFCLIFE.NS,HDFC Life Insurance Company Ltd.,Financial Services,Insurance - Life
+HFCL.NS,HFCL Ltd.,Technology,Communication Equipment
+HAVELLS.NS,Havells India Ltd.,Industrials,Electrical Equipment & Parts
+HEROMOTOCO.NS,Hero MotoCorp Ltd.,Consumer Cyclical,Auto Manufacturers
+HEXT.NS,Hexaware Technologies Ltd.,Technology,Information Technology Services
+HSCL.NS,Himadri Speciality Chemical Ltd.,Basic Materials,Specialty Chemicals
+HINDALCO.NS,Hindalco Industries Ltd.,Basic Materials,Aluminum
+HAL.NS,Hindustan Aeronautics Ltd.,Industrials,Aerospace & Defense
+HINDCOPPER.NS,Hindustan Copper Ltd.,Basic Materials,Copper
+HINDPETRO.NS,Hindustan Petroleum Corporation Ltd.,Energy,Oil & Gas Refining & Marketing
+HINDUNILVR.NS,Hindustan Unilever Ltd.,Consumer Defensive,Household & Personal Products
+HINDZINC.NS,Hindustan Zinc Ltd.,Basic Materials,Other Industrial Metals & Mining
+POWERINDIA.NS,Hitachi Energy India Ltd.,Industrials,Electrical Equipment & Parts
+HOMEFIRST.NS,Home First Finance Company India Ltd.,Financial Services,Mortgage Finance
+HONASA.NS,Honasa Consumer Ltd.,Consumer Defensive,Household & Personal Products
+HONAUT.NS,Honeywell Automation India Ltd.,Industrials,Electrical Equipment & Parts
+HUDCO.NS,Housing & Urban Development Corporation Ltd.,Financial Services,Credit Services
+HYUNDAI.NS,Hyundai Motor India Ltd.,Consumer Cyclical,Auto Manufacturers
+ICICIBANK.NS,ICICI Bank Ltd.,Financial Services,Banks - Regional
+ICICIGI.NS,ICICI Lombard General Insurance Company Ltd.,Financial Services,Insurance - Diversified
+ICICIAMC.NS,ICICI Prudential Asset Management Company Ltd.,Financial Services,Asset Management
+ICICIPRULI.NS,ICICI Prudential Life Insurance Company Ltd.,Financial Services,Insurance - Life
+IDBI.NS,IDBI Bank Ltd.,Financial Services,Banks - Regional
+IDFCFIRSTB.NS,IDFC First Bank Ltd.,Financial Services,Banks - Regional
+IFCI.NS,IFCI Ltd.,Financial Services,Credit Services
+IIFL.NS,IIFL Finance Ltd.,Financial Services,Credit Services
+IRB.NS,IRB Infrastructure Developers Ltd.,Industrials,Infrastructure Operations
+IRCON.NS,IRCON International Ltd.,Industrials,Engineering & Construction
+ITCHOTELS.NS,ITC Hotels Ltd.,Consumer Cyclical,Resorts & Casinos
+ITC.NS,ITC Ltd.,Consumer Defensive,Tobacco
+ITI.NS,ITI Ltd.,Technology,Communication Equipment
+INDGN.NS,Indegene Ltd.,Healthcare,Health Information Services
+INDIACEM.NS,India Cements Ltd.,Basic Materials,Building Materials
+INDIAMART.NS,Indiamart Intermesh Ltd.,Communication Services,Internet Content & Information
+INDIANB.NS,Indian Bank,Financial Services,Banks - Regional
+IEX.NS,Indian Energy Exchange Ltd.,Financial Services,Capital Markets
+INDHOTEL.NS,Indian Hotels Co. Ltd.,Consumer Cyclical,Lodging
+IOC.NS,Indian Oil Corporation Ltd.,Energy,Oil & Gas Refining & Marketing
+IOB.NS,Indian Overseas Bank,Financial Services,Banks - Regional
+IRCTC.NS,Indian Railway Catering And Tourism Corporation Ltd.,Consumer Cyclical,Travel Services
+IRFC.NS,Indian Railway Finance Corporation Ltd.,Financial Services,Credit Services
+IREDA.NS,Indian Renewable Energy Development Agency Ltd.,Financial Services,Credit Services
+IGL.NS,Indraprastha Gas Ltd.,Utilities,Utilities - Regulated Gas
+INDUSTOWER.NS,Indus Towers Ltd.,Communication Services,Telecom Services
+INDUSINDBK.NS,IndusInd Bank Ltd.,Financial Services,Banks - Regional
+NAUKRI.NS,Info Edge (India) Ltd.,Communication Services,Internet Content & Information
+INFY.NS,Infosys Ltd.,Technology,Information Technology Services
+INOXWIND.NS,Inox Wind Ltd.,Industrials,Specialty Industrial Machinery
+INTELLECT.NS,Intellect Design Arena Ltd.,Technology,Software - Application
+INDIGO.NS,InterGlobe Aviation Ltd.,Industrials,Airlines
+IGIL.NS,International Gemological Institute Ltd.,Basic Materials,Other Precious Metals & Mining
+IKS.NS,Inventurus Knowledge Solutions Ltd.,Healthcare,Health Information Services
+IPCALAB.NS,Ipca Laboratories Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+JBCHEPHARM.NS,J.B. Chemicals & Pharmaceuticals Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+JKCEMENT.NS,J.K. Cement Ltd.,Basic Materials,Building Materials
+JBMA.NS,JBM Auto Ltd.,Consumer Cyclical,Auto Parts
+JKTYRE.NS,JK Tyre & Industries Ltd.,Consumer Cyclical,Auto Parts
+JMFINANCIL.NS,JM Financial Ltd.,Financial Services,Capital Markets
+JSWCEMENT.NS,JSW Cement Ltd.,Basic Materials,Building Materials
+JSWDULUX.NS,JSW Dulux Ltd.,Consumer Durables,Consumer Durables
+JSWENERGY.NS,JSW Energy Ltd.,Utilities,Utilities - Independent Power Producers
+JSWINFRA.NS,JSW Infrastructure Ltd.,Industrials,Marine Shipping
+JSWSTEEL.NS,JSW Steel Ltd.,Basic Materials,Steel
+JAINREC.NS,Jain Resource Recycling Ltd.,Basic Materials,Other Industrial Metals & Mining
+JPPOWER.NS,Jaiprakash Power Ventures Ltd.,Utilities,Utilities - Independent Power Producers
+J&KBANK.NS,Jammu & Kashmir Bank Ltd.,Financial Services,Banks - Regional
+JINDALSAW.NS,Jindal Saw Ltd.,Basic Materials,Steel
+JSL.NS,Jindal Stainless Ltd.,Basic Materials,Steel
+JINDALSTEL.NS,Jindal Steel Ltd.,Basic Materials,Steel
+JIOFIN.NS,Jio Financial Services Ltd.,Financial Services,Asset Management
+JUBLFOOD.NS,Jubilant Foodworks Ltd.,Consumer Cyclical,Restaurants
+JUBLINGREA.NS,Jubilant Ingrevia Ltd.,Basic Materials,Specialty Chemicals
+JUBLPHARMA.NS,Jubilant Pharmova Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+JWL.NS,Jupiter Wagons Ltd.,Industrials,Railroads
+JYOTICNC.NS,Jyoti CNC Automation Ltd.,Industrials,Specialty Industrial Machinery
+KPRMILL.NS,K.P.R. Mill Ltd.,Consumer Cyclical,Textile Manufacturing
+KEI.NS,KEI Industries Ltd.,Industrials,Electrical Equipment & Parts
+KPITTECH.NS,KPIT Technologies Ltd.,Technology,Software - Infrastructure
+KAJARIACER.NS,Kajaria Ceramics Ltd.,Industrials,Building Products & Equipment
+KPIL.NS,Kalpataru Projects International Ltd.,Industrials,Engineering & Construction
+KALYANKJIL.NS,Kalyan Jewellers India Ltd.,Consumer Cyclical,Luxury Goods
+KARURVYSYA.NS,Karur Vysya Bank Ltd.,Financial Services,Banks - Regional
+KAYNES.NS,Kaynes Technology India Ltd.,Technology,Electronic Components
+KEC.NS,Kec International Ltd.,Industrials,Engineering & Construction
+KFINTECH.NS,Kfin Technologies Ltd.,Technology,Software - Application
+KIRLOSENG.NS,Kirloskar Oil Eng Ltd.,Industrials,Specialty Industrial Machinery
+KOTAKBANK.NS,Kotak Mahindra Bank Ltd.,Financial Services,Banks - Regional
+KIMS.NS,Krishna Institute of Medical Sciences Ltd.,Healthcare,Medical Care Facilities
+LTF.NS,L&T Finance Ltd.,Financial Services,Credit Services
+LTTS.NS,L&T Technology Services Ltd.,Technology,Information Technology Services
+LGEINDIA.NS,LG Electronics India Ltd.,Technology,Consumer Electronics
+LICHSGFIN.NS,LIC Housing Finance Ltd.,Financial Services,Mortgage Finance
+LTFOODS.NS,LT Foods Ltd.,Consumer Defensive,Packaged Foods
+LTM.NS,LTM Ltd.,Technology,Information Technology Services
+LT.NS,Larsen & Toubro Ltd.,Industrials,Engineering & Construction
+LATENTVIEW.NS,Latent View Analytics Ltd.,Industrials,Consulting Services
+LAURUSLABS.NS,Laurus Labs Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+THELEELA.NS,Leela Palaces Hotels & Resorts Ltd.,Consumer Cyclical,Lodging
+LEMONTREE.NS,Lemon Tree Hotels Ltd.,Consumer Cyclical,Lodging
+LENSKART.NS,Lenskart Solutions Ltd.,Healthcare,Medical Instruments & Supplies
+LICI.NS,Life Insurance Corporation of India,Financial Services,Insurance - Life
+LINDEINDIA.NS,Linde India Ltd.,Basic Materials,Specialty Chemicals
+LLOYDSME.NS,Lloyds Metals And Energy Ltd.,Basic Materials,Steel
+LODHA.NS,Lodha Developers Ltd.,Real Estate,Real Estate - Development
+LUPIN.NS,Lupin Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+MMTC.NS,MMTC Ltd.,Industrials,Conglomerates
+MRF.NS,MRF Ltd.,Consumer Cyclical,Auto Parts
+MGL.NS,Mahanagar Gas Ltd.,Utilities,Utilities - Regulated Gas
+M&MFIN.NS,Mahindra & Mahindra Financial Services Ltd.,Financial Services,Credit Services
+M&M.NS,Mahindra & Mahindra Ltd.,Consumer Cyclical,Auto Manufacturers
+MANAPPURAM.NS,Manappuram Finance Ltd.,Financial Services,Credit Services
+MRPL.NS,Mangalore Refinery & Petrochemicals Ltd.,Energy,Oil & Gas Refining & Marketing
+MANKIND.NS,Mankind Pharma Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+MARICO.NS,Marico Ltd.,Consumer Defensive,Household & Personal Products
+MARUTI.NS,Maruti Suzuki India Ltd.,Consumer Cyclical,Auto Manufacturers
+MFSL.NS,Max Financial Services Ltd.,Financial Services,Insurance - Life
+MAXHEALTH.NS,Max Healthcare Institute Ltd.,Healthcare,Medical Care Facilities
+MAZDOCK.NS,Mazagoan Dock Shipbuilders Ltd.,Industrials,Aerospace & Defense
+MEESHO.NS,Meesho Ltd.,Consumer Cyclical,Internet Retail
+MINDACORP.NS,Minda Corporation Ltd.,Consumer Cyclical,Auto Parts
+MSUMI.NS,Motherson Sumi Wiring India Ltd.,Consumer Cyclical,Auto Parts
+MOTILALOFS.NS,Motilal Oswal Financial Services Ltd.,Financial Services,Capital Markets
+MPHASIS.NS,MphasiS Ltd.,Technology,Information Technology Services
+MCX.NS,Multi Commodity Exchange of India Ltd.,Financial Services,Financial Data & Stock Exchanges
+MUTHOOTFIN.NS,Muthoot Finance Ltd.,Financial Services,Credit Services
+NATCOPHARM.NS,NATCO Pharma Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+NBCC.NS,NBCC (India) Ltd.,Industrials,Engineering & Construction
+NCC.NS,NCC Ltd.,Industrials,Engineering & Construction
+NHPC.NS,NHPC Ltd.,Utilities,Utilities - Renewable
+NLCINDIA.NS,NLC India Ltd.,Utilities,Utilities - Regulated Electric
+NMDC.NS,NMDC Ltd.,Basic Materials,Steel
+NSLNISP.NS,NMDC Steel Ltd.,Basic Materials,Steel
+NTPCGREEN.NS,NTPC Green Energy Ltd.,Utilities,Utilities - Renewable
+NTPC.NS,NTPC Ltd.,Utilities,Utilities - Regulated Electric
+NH.NS,Narayana Hrudayalaya Ltd.,Healthcare,Medical Care Facilities
+NATIONALUM.NS,National Aluminium Co. Ltd.,Basic Materials,Aluminum
+NAVA.NS,Nava Ltd.,Industrials,Conglomerates
+NAVINFLUOR.NS,Navin Fluorine International Ltd.,Basic Materials,Chemicals
+NESTLEIND.NS,Nestle India Ltd.,Consumer Defensive,Packaged Foods
+NETWEB.NS,Netweb Technologies India Ltd.,Technology,Computer Hardware
+NEULANDLAB.NS,Neuland Laboratories Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+NEWGEN.NS,Newgen Software Technologies Ltd.,Technology,Software - Infrastructure
+NAM-INDIA.NS,Nippon Life India Asset Management Ltd.,Financial Services,Asset Management
+NIVABUPA.NS,Niva Bupa Health Insurance Company Ltd.,Financial Services,Insurance - Life
+NUVAMA.NS,Nuvama Wealth Management Ltd.,Financial Services,Asset Management
+NUVOCO.NS,Nuvoco Vistas Corporation Ltd.,Basic Materials,Building Materials
+OBEROIRLTY.NS,Oberoi Realty Ltd.,Real Estate,Real Estate - Development
+ONGC.NS,Oil & Natural Gas Corporation Ltd.,Energy,Oil & Gas Integrated
+OIL.NS,Oil India Ltd.,Energy,Oil & Gas Integrated
+OLAELEC.NS,Ola Electric Mobility Ltd.,Consumer Cyclical,Auto Manufacturers
+OLECTRA.NS,Olectra Greentech Ltd.,Industrials,Farm & Heavy Construction Machinery
+PAYTM.NS,One 97 Communications Ltd.,Technology,Software - Infrastructure
+ONESOURCE.NS,Onesource Specialty Pharma Ltd.,Healthcare,Biotechnology
+OFSS.NS,Oracle Financial Services Software Ltd.,Technology,Software - Infrastructure
+POLICYBZR.NS,PB Fintech Ltd.,Financial Services,Insurance Brokers
+PCBL.NS,PCBL Chemical Ltd.,Basic Materials,Specialty Chemicals
+PGEL.NS,PG Electroplast Ltd.,Technology,Electronic Components
+PIIND.NS,PI Industries Ltd.,Basic Materials,Agricultural Inputs
+PNBHOUSING.NS,PNB Housing Finance Ltd.,Financial Services,Mortgage Finance
+PTCIL.NS,PTC Industries Ltd.,Industrials,Metal Fabrication
+PVRINOX.NS,PVR INOX Ltd.,Communication Services,Entertainment
+PAGEIND.NS,Page Industries Ltd.,Consumer Cyclical,Apparel Manufacturing
+PARADEEP.NS,Paradeep Phosphates Ltd.,Basic Materials,Agricultural Inputs
+PATANJALI.NS,Patanjali Foods Ltd.,Consumer Defensive,Packaged Foods
+PERSISTENT.NS,Persistent Systems Ltd.,Technology,Information Technology Services
+PETRONET.NS,Petronet LNG Ltd.,Energy,Oil & Gas Refining & Marketing
+PFIZER.NS,Pfizer Ltd.,Healthcare,Drug Manufacturers - General
+PHOENIXLTD.NS,Phoenix Mills Ltd.,Real Estate,Real Estate - Diversified
+PWL.NS,Physicswallah Ltd.,Consumer Defensive,Education & Training Services
+PIDILITIND.NS,Pidilite Industries Ltd.,Basic Materials,Specialty Chemicals
+PINELABS.NS,Pine Labs Ltd.,Technology,Software - Infrastructure
+PIRAMALFIN.NS,Piramal Finance Ltd.,Financial Services,Credit Services
+PPLPHARMA.NS,Piramal Pharma Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+POLYMED.NS,Poly Medicure Ltd.,Healthcare,Medical Instruments & Supplies
+POLYCAB.NS,Polycab India Ltd.,Industrials,Electrical Equipment & Parts
+POONAWALLA.NS,Poonawalla Fincorp Ltd.,Financial Services,Credit Services
+PFC.NS,Power Finance Corporation Ltd.,Financial Services,Credit Services
+POWERGRID.NS,Power Grid Corporation of India Ltd.,Utilities,Utilities - Regulated Electric
+PREMIERENE.NS,Premier Energies Ltd.,Technology,Solar
+PRESTIGE.NS,Prestige Estates Projects Ltd.,Real Estate,Real Estate - Diversified
+PNB.NS,Punjab National Bank,Financial Services,Banks - Regional
+RRKABEL.NS,R R Kabel Ltd.,Industrials,Electrical Equipment & Parts
+RBLBANK.NS,RBL Bank Ltd.,Financial Services,Banks - Regional
+RECLTD.NS,REC Ltd.,Financial Services,Credit Services
+RHIM.NS,RHI MAGNESITA INDIA LTD.,Industrials,Metal Fabrication
+RITES.NS,RITES Ltd.,Industrials,Engineering & Construction
+RADICO.NS,Radico Khaitan Ltd,Consumer Defensive,Beverages - Wineries & Distilleries
+RVNL.NS,Rail Vikas Nigam Ltd.,Industrials,Engineering & Construction
+RAILTEL.NS,Railtel Corporation Of India Ltd.,Communication Services,Telecom Services
+RAINBOW.NS,Rainbow Childrens Medicare Ltd.,Healthcare,Medical Care Facilities
+RKFORGE.NS,Ramkrishna Forgings Ltd.,Industrials,Metal Fabrication
+REDINGTON.NS,Redington Ltd.,Technology,Information Technology Services
+RELIANCE.NS,Reliance Industries Ltd.,Energy,Oil & Gas Refining & Marketing
+RPOWER.NS,Reliance Power Ltd.,Utilities,Utilities - Independent Power Producers
+SBFC.NS,SBFC Finance Ltd.,Financial Services,Credit Services
+SBICARD.NS,SBI Cards and Payment Services Ltd.,Financial Services,Credit Services
+SBILIFE.NS,SBI Life Insurance Company Ltd.,Financial Services,Insurance - Life
+SJVN.NS,SJVN Ltd.,Utilities,Utilities - Renewable
+SRF.NS,SRF Ltd.,Industrials,Conglomerates
+SAGILITY.NS,Sagility Ltd.,Healthcare,Health Information Services
+SAILIFE.NS,Sai Life Sciences Ltd.,Healthcare,Diagnostics & Research
+SAMMAANCAP.NS,Sammaan Capital Ltd.,Financial Services,Mortgage Finance
+MOTHERSON.NS,Samvardhana Motherson International Ltd.,Consumer Cyclical,Auto Parts
+SAPPHIRE.NS,Sapphire Foods India Ltd.,Consumer Cyclical,Restaurants
+SARDAEN.NS,Sarda Energy and Minerals Ltd.,Basic Materials,Steel
+SAREGAMA.NS,Saregama India Ltd,Communication Services,Entertainment
+SCHAEFFLER.NS,Schaeffler India Ltd.,Consumer Cyclical,Auto Parts
+SCHNEIDER.NS,Schneider Electric Infrastructure Ltd.,Industrials,Electrical Equipment & Parts
+SCI.NS,Shipping Corporation of India Ltd.,Industrials,Marine Shipping
+SHREECEM.NS,Shree Cement Ltd.,Basic Materials,Building Materials
+SHRIRAMFIN.NS,Shriram Finance Ltd.,Financial Services,Credit Services
+SHYAMMETL.NS,Shyam Metalics and Energy Ltd.,Basic Materials,Steel
+ENRIN.NS,Siemens Energy India Ltd.,Utilities,Utilities - Renewable
+SIEMENS.NS,Siemens Ltd.,Industrials,Specialty Industrial Machinery
+SIGNATURE.NS,Signatureglobal (India) Ltd.,Real Estate,Real Estate - Development
+SOBHA.NS,Sobha Ltd.,Real Estate,Real Estate - Development
+SOLARINDS.NS,Solar Industries India Ltd.,Basic Materials,Specialty Chemicals
+SONACOMS.NS,Sona BLW Precision Forgings Ltd.,Consumer Cyclical,Auto Parts
+SONATSOFTW.NS,Sonata Software Ltd.,Technology,Information Technology Services
+STARHEALTH.NS,Star Health and Allied Insurance Company Ltd.,Financial Services,Insurance - Life
+SBIN.NS,State Bank of India,Financial Services,Banks - Regional
+SAIL.NS,Steel Authority of India Ltd.,Basic Materials,Steel
+SUMICHEM.NS,Sumitomo Chemical India Ltd.,Basic Materials,Agricultural Inputs
+SUNPHARMA.NS,Sun Pharmaceutical Industries Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+SUNTV.NS,Sun TV Network Ltd.,Communication Services,Broadcasting
+SUNDARMFIN.NS,Sundaram Finance Ltd.,Financial Services,Credit Services
+SUPREMEIND.NS,Supreme Industries Ltd.,Industrials,Building Products & Equipment
+SPLPETRO.NS,Supreme Petrochem Ltd.,Basic Materials,Specialty Chemicals
+SUZLON.NS,Suzlon Energy Ltd.,Industrials,Specialty Industrial Machinery
+SWANCORP.NS,Swan Corp Ltd.,Industrials,Conglomerates
+SWIGGY.NS,Swiggy Ltd.,Consumer Cyclical,Internet Retail
+SYNGENE.NS,Syngene International Ltd.,Healthcare,Diagnostics & Research
+SYRMA.NS,Syrma SGS Technology Ltd.,Technology,Electronic Components
+TBOTEK.NS,TBO Tek Ltd.,Consumer Cyclical,Travel Services
+TVSMOTOR.NS,TVS Motor Company Ltd.,Consumer Cyclical,Auto Manufacturers
+TATACAP.NS,Tata Capital Ltd.,Financial Services,Credit Services
+TATACHEM.NS,Tata Chemicals Ltd.,Basic Materials,Chemicals
+TATACOMM.NS,Tata Communications Ltd.,Communication Services,Telecom Services
+TCS.NS,Tata Consultancy Services Ltd.,Technology,Information Technology Services
+TATACONSUM.NS,Tata Consumer Products Ltd.,Consumer Defensive,Packaged Foods
+TATAELXSI.NS,Tata Elxsi Ltd.,Technology,Software - Application
+TATAINVEST.NS,Tata Investment Corporation Ltd.,Financial Services,Asset Management
+TMCV.NS,Tata Motors Ltd.,Consumer Cyclical,Auto Manufacturers
+TMPV.NS,Tata Motors Passenger Vehicles Ltd.,Consumer Cyclical,Auto Manufacturers
+TATAPOWER.NS,Tata Power Co. Ltd.,Utilities,Utilities - Independent Power Producers
+TATASTEEL.NS,Tata Steel Ltd.,Basic Materials,Steel
+TATATECH.NS,Tata Technologies Ltd.,Technology,Information Technology Services
+TTML.NS,Tata Teleservices (Maharashtra) Ltd.,Communication Services,Telecom Services
+TECHM.NS,Tech Mahindra Ltd.,Technology,Information Technology Services
+TECHNOE.NS,Techno Electric & Engineering Company Ltd.,Industrials,Engineering & Construction
+TEGA.NS,Tega Industries Ltd.,Industrials,Specialty Industrial Machinery
+TEJASNET.NS,Tejas Networks Ltd.,Technology,Communication Equipment
+TENNIND.NS,Tenneco Clean Air India Ltd.,Consumer Cyclical,Auto Parts
+NIACL.NS,The New India Assurance Company Ltd.,Financial Services,Insurance - Diversified
+RAMCOCEM.NS,The Ramco Cements Ltd.,Basic Materials,Building Materials
+THERMAX.NS,Thermax Ltd.,Industrials,Conglomerates
+TIMKEN.NS,Timken India Ltd.,Industrials,Tools & Accessories
+TITAGARH.NS,Titagarh Rail Systems Ltd.,Industrials,Railroads
+TITAN.NS,Titan Company Ltd.,Consumer Cyclical,Luxury Goods
+TORNTPHARM.NS,Torrent Pharmaceuticals Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+TORNTPOWER.NS,Torrent Power Ltd.,Utilities,Utilities - Independent Power Producers
+TARIL.NS,Transformers And Rectifiers (India) Ltd.,Industrials,Electrical Equipment & Parts
+TRAVELFOOD.NS,Travel Food Services Ltd.,Consumer Cyclical,Restaurants
+TRENT.NS,Trent Ltd.,Consumer Cyclical,Apparel Retail
+TRIDENT.NS,Trident Ltd.,Consumer Cyclical,Textile Manufacturing
+TRITURBINE.NS,Triveni Turbine Ltd.,Industrials,Specialty Industrial Machinery
+TIINDIA.NS,Tube Investments of India Ltd.,Industrials,Conglomerates
+UCOBANK.NS,UCO Bank,Financial Services,Banks - Regional
+UNOMINDA.NS,UNO Minda Ltd.,Consumer Cyclical,Auto Parts
+UPL.NS,UPL Ltd.,Basic Materials,Agricultural Inputs
+UTIAMC.NS,UTI Asset Management Company Ltd.,Financial Services,Asset Management
+ULTRACEMCO.NS,UltraTech Cement Ltd.,Basic Materials,Building Materials
+UNIONBANK.NS,Union Bank of India,Financial Services,Banks - Regional
+UBL.NS,United Breweries Ltd.,Consumer Defensive,Beverages - Brewers
+UNITDSPR.NS,United Spirits Ltd.,Consumer Defensive,Beverages - Wineries & Distilleries
+URBANCO.NS,Urban Company Ltd.,Technology,Software - Application
+USHAMART.NS,Usha Martin Ltd.,Basic Materials,Steel
+VTL.NS,Vardhman Textiles Ltd.,Consumer Cyclical,Textile Manufacturing
+VBL.NS,Varun Beverages Ltd.,Consumer Defensive,Beverages - Non-Alcoholic
+VEDL.NS,Vedanta Ltd.,Basic Materials,Other Industrial Metals & Mining
+VIJAYA.NS,Vijaya Diagnostic Centre Ltd.,Healthcare,Diagnostics & Research
+VMM.NS,Vishal Mega Mart Ltd.,Consumer Cyclical,Department Stores
+IDEA.NS,Vodafone Idea Ltd.,Communication Services,Telecom Services
+VOLTAS.NS,Voltas Ltd.,Consumer Cyclical,"Furnishings, Fixtures & Appliances"
+WAAREEENER.NS,Waaree Energies Ltd.,Technology,Solar
+WELCORP.NS,Welspun Corp Ltd.,Basic Materials,Steel
+WELSPUNLIV.NS,Welspun Living Ltd.,Consumer Cyclical,Textile Manufacturing
+WHIRLPOOL.NS,Whirlpool of India Ltd.,Consumer Cyclical,"Furnishings, Fixtures & Appliances"
+WIPRO.NS,Wipro Ltd.,Technology,Information Technology Services
+WOCKPHARMA.NS,Wockhardt Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+YESBANK.NS,Yes Bank Ltd.,Financial Services,Banks - Regional
+ZFCVINDIA.NS,ZF Commercial Vehicle Control Systems India Ltd.,Consumer Cyclical,Auto Parts
+ZEEL.NS,Zee Entertainment Enterprises Ltd.,Communication Services,Broadcasting
+ZENTEC.NS,Zen Technologies Ltd.,Industrials,Aerospace & Defense
+ZENSARTECH.NS,Zensar Technolgies Ltd.,Technology,Information Technology Services
+ZYDUSLIFE.NS,Zydus Lifesciences Ltd.,Healthcare,Drug Manufacturers - Specialty & Generic
+ZYDUSWELL.NS,Zydus Wellness Ltd.,Consumer Defensive,Packaged Foods
+ECLERX.NS,eClerx Services Ltd.,Technology,Information Technology Services

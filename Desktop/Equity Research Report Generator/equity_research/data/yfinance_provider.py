@@ -15,6 +15,68 @@ from equity_research.data.provider import DataProvider
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Currency conversion helper
+# ---------------------------------------------------------------------------
+
+_USDINR_PLAUSIBLE = (75.0, 92.0)  # reject stale / incorrect yfinance quotes
+
+
+def _fetch_usdinr(fallback: float = 84.0) -> float:
+    """Return the live USDINR rate, with plausible-range filtering.
+
+    Tries fast_info, then info dict, then 1-day history, then the inverse
+    pair (INR=X).  Returns *fallback* only if all four fail.
+    """
+    def _ok(r: float | None) -> float | None:
+        if r is None or not math.isfinite(r):
+            return None
+        return r if _USDINR_PLAUSIBLE[0] <= r <= _USDINR_PLAUSIBLE[1] else None
+
+    # 1. fast_info
+    try:
+        r = _ok(yf.Ticker("USDINR=X").fast_info.get("last_price"))
+        if r:
+            return r
+    except Exception:  # noqa: BLE001
+        pass
+    # 2. info dict
+    try:
+        r = _ok(yf.Ticker("USDINR=X").info.get("regularMarketPrice"))
+        if r:
+            return r
+    except Exception:  # noqa: BLE001
+        pass
+    # 3. 1-day history
+    try:
+        hist = yf.Ticker("USDINR=X").history(period="5d")
+        if not hist.empty:
+            r = _ok(float(hist["Close"].dropna().iloc[-1]))
+            if r:
+                return r
+    except Exception:  # noqa: BLE001
+        pass
+    # 4. Inverse pair: INR=X (quotes INR per 1 USD, but sometimes 1/USD)
+    try:
+        inv = yf.Ticker("INR=X").fast_info.get("last_price")
+        if inv and math.isfinite(inv) and inv > 0:
+            # INR=X usually quotes the same as USDINR=X
+            r = _ok(inv)
+            if r:
+                return r
+            # Try inverse in case it's USD per INR
+            r = _ok(1.0 / inv)
+            if r:
+                return r
+    except Exception:  # noqa: BLE001
+        pass
+
+    logger.warning(
+        "All USDINR fetches failed or returned implausible values — using fallback %.2f",
+        fallback,
+    )
+    return fallback
+
 _NIFTY500_CSV = Path(__file__).parent / "nifty500_tickers.csv"
 
 # ---------------------------------------------------------------------------
@@ -86,7 +148,12 @@ _CASHFLOW_MAP: dict[str, list[str]] = {
     ],
     "change_in_working_capital": [
         "Change In Working Capital",
-        "Changes In Cash",
+        # NOTE: "Changes In Cash" is intentionally excluded here.
+        # It maps to the net change in the firm's cash balance (including dividends
+        # and buybacks), not the change in operating working capital.  Using it
+        # was causing catastrophic FCFF understatement for cash-generative companies
+        # like Infosys where large buyback/dividend outflows were subtracted from FCFF.
+        # If "Change In Working Capital" is absent, the code fills NaN with 0 (logged).
     ],
 }
 
@@ -217,10 +284,19 @@ class YFinanceProvider(DataProvider):
                 profile[norm_name] = raw_val
 
         profile["ticker"] = norm_ticker
+        # Expose the currency the financial statements are denominated in.
+        # yfinance reports this as 'financialCurrency' (e.g. "USD" for INFY.NS,
+        # "INR" for RELIANCE.NS).  Downstream code uses this to convert to INR.
+        profile["financial_currency"] = raw_info.get("financialCurrency", "INR")
         return profile
 
     def get_financials(self, ticker: str) -> dict[str, pd.DataFrame]:
-        """Fetch and normalize annual income, balance sheet, and cash flow statements."""
+        """Fetch and normalize annual income, balance sheet, and cash flow statements.
+
+        If the company reports financials in a foreign currency (e.g. USD for
+        INFY.NS), all monetary values are converted to INR using the live
+        USDINR rate so that the DCF engine always works in a single currency.
+        """
         norm_ticker = _normalize_ticker(ticker)
         t = yf.Ticker(norm_ticker)
 
@@ -239,6 +315,20 @@ class YFinanceProvider(DataProvider):
             _CASHFLOW_MAP,
             f"{norm_ticker}/cashflow",
         )
+
+        # ── Currency normalization ────────────────────────────────────────
+        fin_currency = self._get_financial_currency(norm_ticker)
+        if fin_currency and fin_currency.upper() != "INR":
+            rate = _fetch_usdinr(self._config.market.fallback_usd_inr)
+            logger.info(
+                "%s reports financials in %s — converting to INR at %.2f",
+                norm_ticker, fin_currency, rate,
+            )
+            for df in (income, balance, cashflow):
+                if not df.empty:
+                    # Multiply all numeric columns by the FX rate
+                    numeric_cols = df.select_dtypes(include="number").columns
+                    df[numeric_cols] = df[numeric_cols] * rate
 
         return {
             "income": income,
@@ -327,6 +417,17 @@ class YFinanceProvider(DataProvider):
         except Exception as exc:  # noqa: BLE001
             logger.error("Failed to fetch info for %s: %s", ticker, exc)
             return {}
+
+    def _get_financial_currency(self, ticker: str) -> str:
+        """Return the currency that this ticker's financial statements use.
+
+        Falls back to 'INR' if the info dict is unavailable.
+        """
+        try:
+            info = yf.Ticker(ticker).info
+            return info.get("financialCurrency", "INR") or "INR"
+        except Exception:  # noqa: BLE001
+            return "INR"
 
     @staticmethod
     def _safe_fetch(
