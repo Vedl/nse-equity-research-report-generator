@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+/* ── Design tokens ─────────────────────────────────────────── */
+:root {
+  --navy: #0A2342;
+  --ink: #1C1C1E;
+  --steel: #4A5568;
+  --rule: #CBD5E0;
+  --paper: #FFFFFF;
+  --accent-buy: #1A7F4B;
+  --accent-sell: #C0392B;
+  --accent-hold: #E67E22;
+  --accent-blue: #1565C0;
+  --row-alt: #F7F9FC;
+  --font-display: 'IBM Plex Serif', Georgia, serif;
+  --font-body: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+  --font-data: 'IBM Plex Mono', 'Menlo', monospace;
+}
+
+@page {
+  size: A4;
+  margin: 1.5cm;
+  @bottom-left {
+    content: "{{ meta.ticker }} · Equity Research · {{ meta.report_date }}";
+    font-family: 'IBM Plex Sans', sans-serif; font-size: 6.5pt; color: #4A5568;
+  }
+  @bottom-center {
+    content: "For informational purposes only — not investment advice";
+    font-family: 'IBM Plex Sans', sans-serif; font-size: 6.5pt; color: #4A5568;
+  }
+  @bottom-right {
+    content: "Page " counter(page) " of " counter(pages);
+    font-family: 'IBM Plex Mono', monospace; font-size: 6.5pt; color: #4A5568;
+  }
+}
+@page :first { margin: 0cm 0cm 1.5cm 0cm; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-body); font-size: 9pt; color: var(--ink);
+       line-height: 1.45; background: var(--paper); }
+
+/* ── Typography ────────────────────────────────────────────── */
+h2 { font-family: var(--font-display); font-size: 13pt; font-weight: 600; color: var(--navy);
+     border-bottom: 2px solid var(--navy); padding-bottom: 3px; margin: 0 0 8px 0;
+     page-break-after: avoid; }
+h3 { font-family: var(--font-body); font-size: 9.5pt; font-weight: 600; color: var(--navy);
+     text-transform: uppercase; letter-spacing: 0.6px; margin: 12px 0 5px;
+     page-break-after: avoid; }
+p  { margin-bottom: 5px; }
+.num, td.n, th.n { font-family: var(--font-data); }
+.small { font-size: 7.5pt; color: var(--steel); }
+.up   { color: var(--accent-buy); font-weight: 600; }
+.down { color: var(--accent-sell); font-weight: 600; }
+.na   { color: #9aa5b1; }
+
+/* ── Pills & badges ────────────────────────────────────────── */
+.pill { display: inline-block; border: 1px solid rgba(255,255,255,0.45); border-radius: 999px;
+        padding: 2px 10px; font-size: 7.5pt; color: #fff; margin-right: 6px; }
+.rating-pill { display: inline-block; border-radius: 999px; padding: 5px 18px;
+        font-size: 13pt; font-weight: 600; color: #fff; letter-spacing: 1px; }
+.rating-buy  { background: var(--accent-buy); }
+.rating-sell { background: var(--accent-sell); }
+.rating-hold { background: var(--accent-hold); }
+.rating-nr   { background: var(--steel); }
+
+/* ── Cover ─────────────────────────────────────────────────── */
+.cover-band { background: var(--navy); color: #fff; padding: 1.6cm 1.5cm 0.9cm;
+              height: 11.2cm; }
+.cover-top { display: flex; justify-content: space-between; }
+.cover-left { width: 62%; }
+.cover-right { width: 35%; text-align: right; }
+.brand { font-family: var(--font-body); font-size: 8pt; letter-spacing: 2.5px;
+         text-transform: uppercase; color: #93A5BE; margin-bottom: 22px; }
+.company-name { font-family: var(--font-display); font-size: 27pt; font-weight: 700;
+                color: #fff; line-height: 1.12; margin-bottom: 6px; }
+.cover-ticker { font-family: var(--font-data); font-size: 13pt; color: #93A5BE;
+                margin-bottom: 16px; }
+.cover-cmp-block { margin-top: 14px; }
+.cover-cmp-label { font-size: 7.5pt; text-transform: uppercase; letter-spacing: 1px; color: #93A5BE; }
+.cover-cmp-value { font-family: var(--font-data); font-size: 15pt; color: #fff; }
+.cover-rule { border: none; border-top: 1px solid rgba(255,255,255,0.25); margin: 16px 0 8px; }
+.cover-sub { font-family: var(--font-display); font-style: italic; font-size: 11pt; color: #D7E0EC; }
+.cover-body { padding: 0.7cm 1.5cm 0; display: flex; gap: 24px; }
+.thesis-col { width: 58%; }
+.stats-col { width: 42%; }
+.thesis-lead { font-size: 9.5pt; line-height: 1.55; color: var(--ink); }
+
+/* ── Tables ───────────────────────────────────────────────── */
+table { width: 100%; border-collapse: collapse; margin: 4px 0 10px; font-size: 8pt;
+        page-break-inside: avoid; }
+th { background: var(--navy); color: #fff; padding: 4px 7px; text-align: right;
+     font-size: 7.2pt; font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; }
+th:first-child { text-align: left; }
+td { padding: 3.5px 7px; text-align: right; border-bottom: 0.5pt solid var(--rule);
+     font-family: var(--font-data); font-size: 7.8pt; }
+td:first-child { text-align: left; font-family: var(--font-body); color: var(--ink); }
+tr:nth-child(even) td { background: var(--row-alt); }
+tr.total td { font-weight: 600; color: var(--navy); border-top: 1pt solid var(--navy);
+              background: #EEF2F8; }
+tr.subject td { font-weight: 600; background: #E4EBF5; }
+tr.mrow td { color: var(--steel); font-size: 7.2pt; font-style: italic; }
+
+.kv-table td:first-child { color: var(--steel); }
+.kv-table td:last-child { font-weight: 500; }
+
+/* ── Scorecards ───────────────────────────────────────────── */
+.scorecard { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0 10px; }
+.score-cell { width: 32%; border: 0.75pt solid var(--rule); padding: 5px 8px; }
+.score-cell .sig-head { font-size: 7.2pt; font-weight: 600; color: var(--navy); }
+.score-cell .sig-detail { font-size: 6.8pt; color: var(--steel); font-family: var(--font-data); }
+.tick { color: var(--accent-buy); font-weight: 700; }
+.cross { color: var(--accent-sell); font-weight: 700; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+.dot-green { background: var(--accent-buy); }
+.dot-amber { background: var(--accent-hold); }
+.dot-red   { background: var(--accent-sell); }
+.dot-na    { background: var(--rule); }
+
+/* ── Flags & banners ──────────────────────────────────────── */
+.flag-banner { background: var(--accent-sell); color: #fff; font-weight: 600;
+               padding: 6px 12px; margin: 8px 0; font-size: 9pt; }
+.clean-banner { background: #E8F3EC; color: var(--accent-buy); font-weight: 600;
+                border: 0.75pt solid var(--accent-buy); padding: 6px 12px; margin: 8px 0; font-size: 8.5pt; }
+.note-box { background: var(--row-alt); border-left: 3px solid var(--accent-blue);
+            padding: 7px 10px; font-size: 8pt; color: var(--steel); margin: 8px 0; }
+
+/* ── Confidence gauge ─────────────────────────────────────── */
+.gauge-wrap { margin: 8px 0 4px; }
+.gauge-track { background: #E6EBF2; border-radius: 4px; height: 12px; width: 100%; }
+.gauge-fill { height: 12px; border-radius: 4px; }
+.gauge-label { font-family: var(--font-data); font-size: 8pt; color: var(--navy); margin-top: 3px; }
+
+/* ── Sensitivity heat map ─────────────────────────────────── */
+.sens-table th { background: var(--navy); text-align: center; padding: 3px 6px; }
+.sens-table td { text-align: center; padding: 3px 6px; font-weight: 500; }
+.s-base { background: var(--navy) !important; color: #fff; font-weight: 700; }
+.s-vhi { background: #1A7F4B; color: #fff; }
+.s-hi  { background: #C9E4D4; color: #14532D; }
+.s-mid { background: #fff; }
+.s-lo  { background: #F8DCC8; color: #7C3A06; }
+.s-vlo { background: #C0392B; color: #fff; }
+.s-na  { color: #9aa5b1; }
+
+/* ── Layout helpers ───────────────────────────────────────── */
+.page-break { page-break-before: always; }
+.two-col { display: flex; gap: 18px; }
+.col { flex: 1; }
+.chart { width: 100%; margin: 4px 0 8px; }
+.section-rule { border: none; border-top: 0.75pt solid var(--rule); margin: 10px 0; }
+.disclaimer { font-size: 6.8pt; color: var(--steel); border-top: 0.75pt solid var(--rule);
+              padding-top: 8px; margin-top: 14px; line-height: 1.4; }
+ul.bullets { margin: 4px 0 8px 14px; }
+ul.bullets li { margin-bottom: 4px; font-size: 8.6pt; }
+ol.bullets { margin: 4px 0 8px 16px; }
+ol.bullets li { margin-bottom: 5px; font-size: 8.6pt; }
+</style>
+</head>
+<body>
+
+<!-- ════════════ PAGE 1 — COVER ════════════ -->
+<div class="cover-band">
+  <div class="brand">NSE Research Engine · CFA-Aligned Institutional Equity Research</div>
+  <div class="cover-top">
+    <div class="cover-left">
+      <div class="company-name">{{ meta.name }}</div>
+      <div class="cover-ticker">NSE: {{ meta.ticker }}</div>
+      <div>
+        <span class="pill">{{ meta.sector }}</span>
+        <span class="pill">{{ meta.industry }}</span>
+        <span class="pill">{{ meta.mcap_band }}</span>
+      </div>
+      <div class="cover-cmp-block">
+        <span class="cover-cmp-label">Report date&nbsp;&nbsp;</span>
+        <span class="cover-cmp-value" style="font-size:10pt;">{{ meta.report_date }}</span>
+      </div>
+    </div>
+    <div class="cover-right">
+      <div class="rating-pill rating-{{ rating.css }}">{{ rating.label }}</div>
+      <div class="cover-cmp-block">
+        <div class="cover-cmp-label">CMP</div>
+        <div class="cover-cmp-value">{{ rating.cmp }}</div>
+      </div>
+      <div class="cover-cmp-block">
+        <div class="cover-cmp-label">12-month Target</div>
+        <div class="cover-cmp-value">{{ rating.target }}</div>
+      </div>
+      <div class="cover-cmp-block">
+        <div class="cover-cmp-label">Upside / (Downside)</div>
+        <div class="cover-cmp-value {{ rating.upside_css }}" style="color:{% if rating.upside_css == 'up' %}#7FD1A4{% else %}#F2A096{% endif %};">{{ rating.upside }}</div>
+      </div>
+    </div>
+  </div>
+  <hr class="cover-rule">
+  <div class="cover-sub">Multi-model intrinsic valuation · forensic quality screens · peer triangulation</div>
+</div>
+
+<div class="cover-body">
+  <div class="thesis-col">
+    <h3>Investment Thesis</h3>
+    <p class="thesis-lead">{{ thesis.lead }}</p>
+    <ul class="bullets">
+      {% for b in thesis.bullets %}<li>{{ b }}</li>{% endfor %}
+    </ul>
+  </div>
+  <div class="stats-col">
+    <h3>Key Statistics</h3>
+    <table class="kv-table">
+      {% for s in stats %}
+      <tr><td>{{ s.label }}</td><td class="n">{{ s.value }}</td></tr>
+      {% endfor %}
+    </table>
+    <div class="small">Valuation model: {{ val.primary_label }} (primary, 60%)
+      {%- if val.secondary_label %} · {{ val.secondary_label }} (40%){% endif %}</div>
+  </div>
+</div>
+
+<!-- ════════════ PAGE 2 — EXECUTIVE SUMMARY & VALUATION ════════════ -->
+<div class="page-break"></div>
+<h2>Executive Summary &amp; Valuation</h2>
+
+<div class="two-col">
+  <div class="col">
+    <h3>Why {{ rating.label }}</h3>
+    <ul class="bullets">
+      {% for b in summary_bullets %}<li>{{ b }}</li>{% endfor %}
+    </ul>
+    <div class="note-box">{{ val.route_reason }}</div>
+  </div>
+  <div class="col">
+    <h3>Valuation Summary</h3>
+    <table>
+      <tr><th>Scenario</th><th>Value / sh</th><th>vs CMP</th></tr>
+      <tr><td>Bear</td><td class="n">{{ val.bear }}</td><td class="n">{{ val.bear_vs }}</td></tr>
+      <tr class="total"><td>Base (target)</td><td class="n">{{ val.base }}</td><td class="n {{ rating.upside_css }}">{{ rating.upside }}</td></tr>
+      <tr><td>Bull</td><td class="n">{{ val.bull }}</td><td class="n">{{ val.bull_vs }}</td></tr>
+    </table>
+    <table>
+      <tr><th>Model</th><th>Value / sh</th><th>Weight</th></tr>
+      <tr><td>{{ val.primary_label }}</td><td class="n">{{ val.primary_value }}</td><td class="n">60%</td></tr>
+      {% if val.secondary_label %}
+      <tr><td>{{ val.secondary_label }}</td><td class="n">{{ val.secondary_value }}</td><td class="n">40%</td></tr>
+      {% endif %}
+      {% if val.broker_row %}
+      <tr><td>Street consensus ({{ val.broker_n }} analysts)</td><td class="n">{{ val.broker_target }}</td><td class="n">—</td></tr>
+      {% endif %}
+    </table>
+  </div>
+</div>
+
+<img class="chart" src="data:image/svg+xml;base64,{{ charts.price }}" alt="Price vs Nifty 50">
+
+<h3>Valuation Confidence Score — {{ conf.score }}/100</h3>
+<div class="gauge-wrap">
+  <div class="gauge-track"><div class="gauge-fill" style="width: {{ conf.score }}%; background: {{ conf.color }};"></div></div>
+  <div class="gauge-label">{{ conf.score }}/100 — {{ conf.verdict }}</div>
+</div>
+<p class="small">{{ conf.narrative }}</p>
+
+{% if sensitivity_html %}
+<h3>DCF Sensitivity — WACC × Terminal Growth (₹ / share)</h3>
+{{ sensitivity_html }}
+<p class="small">Navy cell = base case ({{ val.wacc_label }} WACC, {{ val.tg_label }} terminal growth).</p>
+{% endif %}
+
+<!-- ════════════ PAGE 3 — FINANCIAL SUMMARY ════════════ -->
+<div class="page-break"></div>
+<h2>Financial Summary</h2>
+<p class="small">All figures in ₹ Crores unless stated. Fiscal years ending March. Diluted EPS in ₹. {{ fin_note }}</p>
+
+<table>
+  <tr><th>Metric</th>{% for y in fin_table.years %}<th class="n">{{ y }}</th>{% endfor %}</tr>
+  {% for row in fin_table.rows %}
+  <tr{% if row.cls %} class="{{ row.cls }}"{% endif %}>
+    <td>{{ row.label }}</td>
+    {% for v in row.vals %}<td class="n">{{ v }}</td>{% endfor %}
+  </tr>
+  {% endfor %}
+</table>
+
+<img class="chart" src="data:image/svg+xml;base64,{{ charts.rev_ebitda }}" alt="Revenue and EBITDA">
+<img class="chart" src="data:image/svg+xml;base64,{{ charts.pat_eps }}" alt="PAT and EPS">
+
+{% if bank %}
+<h3>Bank-Specific Analytics</h3>
+<table class="kv-table">
+  {% for m in bank %}
+  <tr><td>{{ m.label }}</td><td class="n">{{ m.value }}</td></tr>
+  {% endfor %}
+</table>
+<p class="small">GNPA / PCR / CASA / CRAR require regulatory filings not exposed by the automated pipeline; shown as N/A rather than estimated.</p>
+{% endif %}
+
+<!-- ════════════ PAGE 4 — DUPONT & QUALITY ════════════ -->
+<div class="page-break"></div>
+<h2>DuPont &amp; Earnings Quality</h2>
+
+<h3>5-Factor DuPont Decomposition <span class="small">(CFA L2: ROE = Tax burden × Interest burden × EBIT margin × Asset turnover × Leverage)</span></h3>
+<table>
+  <tr><th>Component</th>{% for y in dupont.years %}<th class="n">{{ y }}</th>{% endfor %}</tr>
+  {% for row in dupont.rows %}
+  <tr{% if loop.last %} class="total"{% endif %}><td>{{ row.label }}</td>
+    {% for v in row.vals %}<td class="n">{{ v }}</td>{% endfor %}
+  </tr>
+  {% endfor %}
+</table>
+{% for a in dupont.annotations %}<p class="small">▸ {{ a }}</p>{% endfor %}
+
+<img class="chart" src="data:image/svg+xml;base64,{{ charts.dupont }}" alt="DuPont drivers">
+
+<h3>Piotroski F-Score — {{ piotroski.score }}/9 <span class="small">(Piotroski 2000, J. Accounting Research; ≥7 strong, ≤2 red flag)</span></h3>
+<div class="scorecard">
+  {% for s in piotroski.signals %}
+  <div class="score-cell">
+    <div class="sig-head">
+      {% if s.passed is true %}<span class="tick">✓</span>{% elif s.passed is false %}<span class="cross">✗</span>{% else %}<span class="na">—</span>{% endif %}
+      {{ s.code }} · {{ s.name }}
+    </div>
+    <div class="sig-detail">{{ s.detail }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="two-col">
+  <div class="col">
+    <img class="chart" src="data:image/svg+xml;base64,{{ charts.earnings_quality }}" alt="Earnings quality">
+  </div>
+  <div class="col">
+    <img class="chart" src="data:image/svg+xml;base64,{{ charts.ccc }}" alt="Cash conversion cycle">
+  </div>
+</div>
+
+{% if accruals_flags %}
+<h3>Accruals &amp; Cash-Conversion Flags <span class="small">(Sloan 1996)</span></h3>
+<ul class="bullets">{% for f in accruals_flags %}<li>{{ f }}</li>{% endfor %}</ul>
+{% endif %}
+
+{% if charts.roic %}
+<img class="chart" src="data:image/svg+xml;base64,{{ charts.roic }}" alt="ROIC vs WACC">
+{% endif %}
+
+<div class="two-col">
+  <div class="col">
+    <h3>Capital Allocation Quality — {{ caq.score }}/{{ caq.max }}</h3>
+    <table>
+      <tr><th>Check</th><th>Pts</th><th>Detail</th></tr>
+      {% for c in caq.components %}
+      <tr><td>{{ c.name }}</td><td class="n">{{ c.points }}</td><td class="n" style="text-align:left;font-size:6.8pt;">{{ c.detail }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  <div class="col">
+    <h3>Gross Profitability (Novy-Marx 2013)</h3>
+    <table class="kv-table">
+      <tr><td>GP / Total Assets (latest FY)</td><td class="n">{{ gpa.latest }}</td></tr>
+      <tr><td>Sector percentile</td><td class="n">{{ gpa.percentile }}</td></tr>
+    </table>
+    <p class="small">High gross profitability predicts excess future returns with power comparable
+    to book-to-market — Novy-Marx (2013), Journal of Financial Economics.</p>
+  </div>
+</div>
+
+<!-- ════════════ PAGE 5 — COMPARABLE COMPANY ANALYSIS ════════════ -->
+<div class="page-break"></div>
+<h2>Comparable Company Analysis</h2>
+
+{% if comps.rows %}
+<table>
+  <tr><th>Company</th><th>P/E (TTM)</th><th>EV/EBITDA</th><th>P/B</th><th>EV/Sales</th></tr>
+  {% for r in comps.rows %}
+  <tr{% if r.is_subject %} class="subject"{% endif %}>
+    <td>{{ r.name }}{% if r.is_subject %} ◀{% endif %}</td>
+    <td class="n">{{ r.pe }}</td><td class="n">{{ r.ev_ebitda }}</td>
+    <td class="n">{{ r.pb }}</td><td class="n">{{ r.ev_sales }}</td>
+  </tr>
+  {% endfor %}
+  <tr class="total"><td>Peer median</td>
+    <td class="n">{{ comps.median.pe }}</td><td class="n">{{ comps.median.ev_ebitda }}</td>
+    <td class="n">{{ comps.median.pb }}</td><td class="n">{{ comps.median.ev_sales }}</td></tr>
+</table>
+{% if comps.premium_note %}<p>{{ comps.premium_note }}</p>{% endif %}
+
+<h3>Implied Value per Share from Peer Multiples</h3>
+<table>
+  <tr><th>Basis</th><th>Implied ₹/sh</th><th>vs CMP</th></tr>
+  {% for r in comps.implied %}
+  <tr><td>{{ r.label }}</td><td class="n">{{ r.value }}</td><td class="n {{ r.css }}">{{ r.upside }}</td></tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="na">No qualifying peer set available for this company — peer multiples omitted rather than estimated.</p>
+{% endif %}
+
+{% if sotp_rows %}
+<h3>Sum-of-the-Parts Breakdown</h3>
+<table>
+  <tr><th>Segment</th><th>EBITDA share</th><th>EV/EBITDA</th><th>Segment EBITDA</th><th>Segment EV</th></tr>
+  {% for s in sotp_rows %}
+  <tr><td>{{ s.name }}</td><td class="n">{{ s.share }}</td><td class="n">{{ s.multiple }}</td>
+      <td class="n">{{ s.ebitda }}</td><td class="n">{{ s.ev }}</td></tr>
+  {% endfor %}
+  <tr class="total"><td>Total EV − net debt = equity</td><td></td><td></td><td></td><td class="n">{{ sotp_total }}</td></tr>
+</table>
+<p class="small">Holding-company discount applied per the India valuation engine. Segment notes in the assumptions appendix.</p>
+{% endif %}
+
+{% if india %}
+<h3>India Valuation Engine — Structural Adjustments</h3>
+<table>
+  <tr><th>Factor</th><th>Score / Status</th><th>Impact</th></tr>
+  <tr><td>PSU status discount</td><td class="n">{{ india.is_psu }}</td><td class="n">{{ india.psu_discount }}</td></tr>
+  <tr><td>Business-group adjustment</td><td class="n">—</td><td class="n">{{ india.group_adjustment }}</td></tr>
+  <tr><td>Promoter quality</td><td class="n">{{ india.promoter_score }}</td><td class="n">{{ india.promoter_premium }}</td></tr>
+  <tr><td>Earnings quality (CFO/EBITDA)</td><td class="n">{{ india.earnings_quality }}</td><td class="n">{{ india.cfo_ebitda }}</td></tr>
+</table>
+{% endif %}
+
+<!-- ════════════ PAGE 6 — RISK & GOVERNANCE ════════════ -->
+<div class="page-break"></div>
+<h2>Risk Factors &amp; Governance</h2>
+
+{% if beneish.flagged %}
+<div class="flag-banner">⚠ POSSIBLE EARNINGS MANIPULATION FLAG — Beneish M-Score {{ beneish.m_score }} &gt; −1.78 (Beneish 1999)</div>
+{% elif beneish.m_score != 'n/a' %}
+<div class="clean-banner">Beneish M-Score {{ beneish.m_score }} — below the −1.78 manipulation threshold (clean)</div>
+{% else %}
+<p class="na">Beneish M-Score could not be computed — insufficient two-year statement data.</p>
+{% endif %}
+
+<div class="two-col">
+  <div class="col">
+    <h3>Beneish Components</h3>
+    <table>
+      <tr><th>Index</th><th>Value</th></tr>
+      {% for k, v in beneish.variables %}
+      <tr><td>{{ k }}</td><td class="n">{{ v }}</td></tr>
+      {% endfor %}
+    </table>
+    {% if beneish.missing %}<p class="small">Substituted neutral values for: {{ beneish.missing }}.</p>{% endif %}
+  </div>
+  <div class="col">
+    <h3>Altman Z″-Score (Altman 2000, non-US)</h3>
+    {% if altman.applicable %}
+    <table class="kv-table">
+      <tr><td>X1 — Working capital / TA</td><td class="n">{{ altman.x1 }}</td></tr>
+      <tr><td>X2 — Retained earnings / TA</td><td class="n">{{ altman.x2 }}</td></tr>
+      <tr><td>X3 — EBIT / TA</td><td class="n">{{ altman.x3 }}</td></tr>
+      <tr><td>X4 — Book equity / Liabilities</td><td class="n">{{ altman.x4 }}</td></tr>
+      <tr><td><strong>Z″-Score</strong></td><td class="n"><strong>{{ altman.z }}</strong></td></tr>
+    </table>
+    <p><span class="dot dot-{{ altman.zone_css }}"></span><strong>{{ altman.zone }} zone</strong>
+       <span class="small">(&gt;2.6 safe · 1.1–2.6 grey · &lt;1.1 distress)</span></p>
+    {% else %}
+    <p class="na">Not applicable to financial-sector balance sheets (deposit funding distorts the leverage variables).</p>
+    {% endif %}
+  </div>
+</div>
+
+<h3>Promoter &amp; Governance Scorecard</h3>
+<table>
+  <tr><th>Metric</th><th>Value</th><th></th><th style="text-align:left;">Assessment</th></tr>
+  {% for g in governance %}
+  <tr><td>{{ g.name }}</td><td class="n">{{ g.value }}</td>
+      <td style="text-align:center;"><span class="dot dot-{{ g.light }}"></span></td>
+      <td style="text-align:left; font-family: var(--font-body); font-size:7.5pt; color: var(--steel);">{{ g.note }}</td></tr>
+  {% endfor %}
+</table>
+<p class="small">Promoter holding proxied by Yahoo "insider" bucket for NSE listcos. Pledge, RPT, auditor and board metrics require BSE filings and are shown N/A — never estimated.</p>
+
+<h3>Key Risk Factors</h3>
+<ol class="bullets">
+  {% for r in risks %}<li>{{ r }}</li>{% endfor %}
+</ol>
+
+<h3>ESG</h3>
+<p class="na">ESG data not available via automated pipeline.</p>
+
+<!-- ════════════ PAGE 7 — DETAILED FINANCIALS (APPENDIX) ════════════ -->
+<div class="page-break"></div>
+<h2>Appendix A — Detailed Financial Statements (₹ Crores)</h2>
+
+<h3>Income Statement</h3>
+<table>
+  <tr><th>Line item</th>{% for y in appendix.income.years %}<th class="n">{{ y }}</th>{% endfor %}</tr>
+  {% for row in appendix.income.rows %}
+  <tr><td>{{ row.label }}</td>{% for v in row.vals %}<td class="n">{{ v }}</td>{% endfor %}</tr>
+  {% endfor %}
+</table>
+
+<h3>Balance Sheet</h3>
+<table>
+  <tr><th>Line item</th>{% for y in appendix.balance.years %}<th class="n">{{ y }}</th>{% endfor %}</tr>
+  {% for row in appendix.balance.rows %}
+  <tr><td>{{ row.label }}</td>{% for v in row.vals %}<td class="n">{{ v }}</td>{% endfor %}</tr>
+  {% endfor %}
+</table>
+
+<h3>Cash Flow Statement</h3>
+<table>
+  <tr><th>Line item</th>{% for y in appendix.cashflow.years %}<th class="n">{{ y }}</th>{% endfor %}</tr>
+  {% for row in appendix.cashflow.rows %}
+  <tr><td>{{ row.label }}</td>{% for v in row.vals %}<td class="n">{{ v }}</td>{% endfor %}</tr>
+  {% endfor %}
+</table>
+
+<h2 style="margin-top:14px;">Appendix B — Assumptions &amp; Methodology</h2>
+<table>
+  <tr><th>Parameter</th><th>Value</th><th style="text-align:left;">Source / note</th></tr>
+  {% for a in assumptions %}
+  <tr><td>{{ a.label }}</td><td class="n">{{ a.value }}</td>
+      <td style="text-align:left; font-family: var(--font-body); font-size:7.2pt; color: var(--steel);">{{ a.note }}</td></tr>
+  {% endfor %}
+</table>
+
+<div class="disclaimer">
+  <strong>DISCLAIMER — NOT INVESTMENT ADVICE.</strong>
+  This report is generated automatically from publicly available data (NSE / Yahoo Finance)
+  for informational and educational purposes only. Valuation outputs are analyst-adjustable
+  model results, not forecasts. Data may contain errors, omissions or delays; missing data is
+  shown as "n/a" and never imputed. Forward-looking figures marked "E" are model estimates.
+  Past performance is not indicative of future results. Nothing herein constitutes an offer,
+  solicitation, or investment, legal, or tax advice. Readers should perform independent due
+  diligence and consult a SEBI-registered investment adviser before acting on any information
+  in this document. The authors accept no liability for losses arising from its use.
+</div>
+
+</body>
+</html>

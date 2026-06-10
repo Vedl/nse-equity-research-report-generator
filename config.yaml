@@ -1,0 +1,93 @@
+market:
+  risk_free_rate: 0.068        # India 10Y G-Sec yield (as of May 2026); env RISK_FREE_RATE overrides
+  equity_risk_premium: 0.07    # Damodaran India ERP, January 2026 estimate; env INDIA_ERP overrides
+  tax_rate: 0.25               # Corporate tax rate (base rate post-2019 cut)
+  fallback_usd_inr: 95.0       # Used only when all live USDINR fetches fail
+
+dcf:
+  projection_horizon: 5        # Stage 1: years of explicit FCFF projection at g1
+  stage2_fade_years: 5         # Stage 2: years 6-10, linear fade g1 -> terminal growth
+  terminal_growth_rate: 0.05   # ~ nominal India GDP growth x 0.7 (Gordon growth)
+  revenue_growth_source: historical_cagr   # "historical_cagr" | "manual"
+  # revenue_growth_override: 0.12   # uncomment to override with a fixed annual rate
+
+router:
+  capex_intensity_threshold: 0.25    # capex/revenue ratio above which company is "capex-heavy"
+  leverage_threshold: 4.0            # net_debt/EBITDA above which company is "highly leveraged"
+  financial_keywords:                # industry keywords triggering excess-return model
+    - bank
+    - nbfc
+    - insurance
+    - housing finance
+    - capital markets
+
+peers:
+  max_peers: 5
+  # overrides:
+  #   RELIANCE: [ONGC.NS, IOC.NS, BPCL.NS, HPCL.NS]
+  #   HDFCBANK: [ICICIBANK.NS, KOTAKBANK.NS, AXISBANK.NS, SBIN.NS]
+
+report:
+  currency: INR
+  output_dir: ./reports
+  charts:
+    price_history_period: 2y
+    figsize: [10, 4]
+
+conglomerates:
+  RELIANCE:
+    display_name: "Reliance Industries"
+    segments:
+      - name: "Jio Platforms (Telecom + Digital)"
+        ebitda_share: 0.35
+        ev_ebitda_multiple: 15
+        note: "Indian telecom peers; includes 5G rollout premium"
+      - name: "Reliance Retail"
+        ebitda_share: 0.28
+        ev_ebitda_multiple: 22
+        note: "Premium retail multiple; compares to Avenue Supermarts (DMart)"
+      - name: "O2C (Oil-to-Chemicals)"
+        ebitda_share: 0.37
+        ev_ebitda_multiple: 6
+        note: "Commodity refining; global refiner peers. Sensitive to GRM cycle"
+
+  ITC:
+    display_name: "ITC Ltd"
+    segments:
+      - name: "Cigarettes & Tobacco"
+        ebitda_share: 0.70
+        ev_ebitda_multiple: 18
+        note: "Regulated but high-margin; pricing power offsets volume decline"
+      - name: "FMCG (Non-Tobacco)"
+        ebitda_share: 0.08
+        ev_ebitda_multiple: 40
+        note: "Growth segment — haircare, noodles, dairy. Path to 10% EBITDA margin"
+      - name: "Hotels"
+        ebitda_share: 0.08
+        ev_ebitda_multiple: 18
+        note: "Post-COVID recovery; Indian Hotels / EIH comparables"
+      - name: "Paperboards & Packaging"
+        ebitda_share: 0.14
+        ev_ebitda_multiple: 8
+        note: "Industrial; capacity expansion underway"
+
+  LT:
+    display_name: "Larsen & Toubro"
+    segments:
+      - name: "Infrastructure Projects"
+        ebitda_share: 0.45
+        ev_ebitda_multiple: 18
+        note: "Order book visibility; EPC peers"
+      - name: "IT & Technology Services"
+        ebitda_share: 0.25
+        ev_ebitda_multiple: 22
+        note: "LTIMindtree + LTTS; valued at IT services multiples"
+      - name: "Financial Services"
+        ebitda_share: 0.15
+        ev_ebitda_multiple: 12
+        note: "L&T Finance — NBFC multiple"
+      - name: "Others (Realty, Defence, Power)"
+        ebitda_share: 0.15
+        ev_ebitda_multiple: 10
+        note: "Diversified industrial conglomerate segments"
+

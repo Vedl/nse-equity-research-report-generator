@@ -1,0 +1,15 @@
+yfinance==1.4.0
+pandas==3.0.3
+numpy==2.4.6
+PyYAML==6.0.3
+matplotlib==3.10.9
+Jinja2==3.1.6
+weasyprint==68.1
+fastapi==0.136.3
+uvicorn[standard]==0.48.0
+cachetools==7.1.4
+slowapi==0.1.9
+pytest==9.0.3
+pytest-cov==7.1.0
+ruff==0.15.15
+scipy==1.13.0

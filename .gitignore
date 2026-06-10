@@ -1,0 +1,32 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+reports/
+*.pdf
+.env
+.DS_Store
+equity_research/data/backtest_cache/
+data/cache/
+
+# Node (frontend has its own .gitignore too)
+node_modules/
+
+# Local agent / editor state
+.claude/
+
+# Scratch / planning files
+logs.txt
+plan.txt
+plan2.txt

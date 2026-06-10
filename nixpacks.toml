@@ -1,0 +1,20 @@
+# Railway / Nixpacks build config for WeasyPrint HTML → PDF rendering.
+#
+# KEY: use nixPkgs (not aptPkgs) for the WeasyPrint shared libraries.
+# Nixpacks runs inside a Nix environment; Nix packages are added to the
+# linker search path automatically, whereas apt packages are installed into
+# /usr/lib but are NOT added to LD_LIBRARY_PATH — so CFFI / ctypes can
+# never find them at runtime.  nixPkgs solves this correctly.
+
+[phases.setup]
+nixPkgs = [
+  "glib",          # provides libgobject-2.0-0 (core GLib / GObject)
+  "pango",         # text rendering
+  "cairo",         # 2D graphics
+  "gdk-pixbuf",    # image loading
+  "libffi",        # CFFI foreign-function interface
+  "fontconfig",    # font discovery
+]
+aptPkgs = [
+  "shared-mime-info",   # MIME type database used by gdk-pixbuf
+]
