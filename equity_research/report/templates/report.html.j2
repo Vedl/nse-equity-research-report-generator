@@ -333,6 +333,25 @@ ol.bullets li { margin-bottom: 5px; font-size: 8.6pt; }
   {% endfor %}
 </div>
 
+<h3>Financial-Reliability Verdict — <span class="dot dot-{{ earnings_quality.verdict_css }}"></span>{{ earnings_quality.verdict }}
+  <span class="small">(risk overlay: Sloan accruals + Beneish + Piotroski — not a discount-rate input)</span></h3>
+<p>{{ earnings_quality.verdict_reason }}{% if earnings_quality.score != 'n/a' %} · composite reliability score {{ earnings_quality.score }}/100{% endif %}.</p>
+<table>
+  <tr><th>Screen</th><th>Signal</th><th>Read</th></tr>
+  {% for c in earnings_quality.components %}
+  <tr>
+    <td>{{ c.name }}</td>
+    <td><span class="dot dot-{{ c.flag }}"></span>{{ c.flag|upper }}</td>
+    <td style="text-align:left;font-size:7pt;">{{ c.reason }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% if earnings_quality.accrual_percentile or earnings_quality.fscore_percentile %}
+<p class="small">Industry-relative ({{ earnings_quality.sector }}, n={{ earnings_quality.peer_n }} sector peers):
+  {% if earnings_quality.accrual_percentile %}accruals quality in the {{ earnings_quality.accrual_percentile }} percentile{% endif %}{% if earnings_quality.accrual_percentile and earnings_quality.fscore_percentile %};
+  {% endif %}{% if earnings_quality.fscore_percentile %}Piotroski F-Score in the {{ earnings_quality.fscore_percentile }} percentile{% endif %} of sector.</p>
+{% endif %}
+
 <div class="two-col">
   <div class="col">
     <img class="chart" src="data:image/svg+xml;base64,{{ charts.earnings_quality }}" alt="Earnings quality">

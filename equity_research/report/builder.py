@@ -496,6 +496,37 @@ def _risk_factors(profile: dict, bundle: ResearchBundle) -> list[str]:
     return risks[:6]
 
 
+def _earnings_quality_section(bundle: ResearchBundle) -> dict:
+    """Format the financial-reliability overlay for the report (risk overlay)."""
+    eq = bundle.earnings_quality
+    verdict_css = {"Green": "green", "Amber": "amber", "Red": "red", "Unrated": "na"}.get(
+        eq.verdict, "na"
+    )
+    acc_pct = (
+        f"{eq.accrual_sector_percentile:.0f}th"
+        if eq.accrual_sector_percentile is not None else None
+    )
+    f_pct = (
+        f"{eq.fscore_sector_percentile:.0f}th"
+        if eq.fscore_sector_percentile is not None else None
+    )
+    return {
+        "verdict": eq.verdict,
+        "verdict_css": verdict_css,
+        "verdict_reason": eq.verdict_reason,
+        "score": f"{eq.quality_score:.0f}" if eq.quality_score is not None else NA,
+        "components": [
+            {"name": c.name, "flag": c.flag, "reason": c.reason} for c in eq.components
+        ],
+        "accrual_percentile": acc_pct,
+        "fscore_percentile": f_pct,
+        "sector": eq.sector or "sector",
+        "peer_n": eq.peer_sample_size,
+        "bs_accrual": _pct(eq.accruals.bs_accrual_ratio) if eq.accruals.bs_accrual_ratio is not None else NA,
+        "cf_accrual": _pct(eq.accruals.cf_accrual_ratio) if eq.accruals.cf_accrual_ratio is not None else NA,
+    }
+
+
 def _appendix_tables(financials: dict[str, pd.DataFrame]) -> dict:
     def table(df: pd.DataFrame, defs: list[tuple[str, str]]) -> dict:
         years = [int(y) for y in df.index.tolist()][-5:]
@@ -767,6 +798,7 @@ def generate_report(
         "bank": bank_rows,
         "dupont": _dupont_table(bundle),
         "piotroski": bundle.piotroski,
+        "earnings_quality": _earnings_quality_section(bundle),
         "accruals_flags": bundle.accruals.flags + bundle.ccc.flags,
         "caq": {"score": bundle.caq.score, "max": bundle.caq.max_score,
                 "components": bundle.caq.components},

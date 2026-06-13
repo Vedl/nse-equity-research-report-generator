@@ -570,6 +570,34 @@ def _build_research(ticker_ns: str) -> dict:
             ],
             "flags": bundle.accruals.flags,
         },
+        "earnings_quality": {
+            "verdict": bundle.earnings_quality.verdict,
+            "verdict_reason": bundle.earnings_quality.verdict_reason,
+            "quality_score": _clean(bundle.earnings_quality.quality_score),
+            "sector": bundle.earnings_quality.sector,
+            "peer_sample_size": bundle.earnings_quality.peer_sample_size,
+            "accrual_sector_percentile": _clean(bundle.earnings_quality.accrual_sector_percentile),
+            "fscore_sector_percentile": _clean(bundle.earnings_quality.fscore_sector_percentile),
+            "components": [
+                {
+                    "key": c.key,
+                    "name": c.name,
+                    "flag": c.flag,
+                    "metric": _clean(c.metric),
+                    "reason": c.reason,
+                }
+                for c in bundle.earnings_quality.components
+            ],
+            "accruals": {
+                "noa_latest": _clean(bundle.earnings_quality.accruals.noa_latest),
+                "noa_prior": _clean(bundle.earnings_quality.accruals.noa_prior),
+                "bs_accrual_ratio": _clean(bundle.earnings_quality.accruals.bs_accrual_ratio),
+                "cf_accrual_ratio": _clean(bundle.earnings_quality.accruals.cf_accrual_ratio),
+                "headline_ratio": _clean(bundle.earnings_quality.accruals.headline_ratio),
+                "flag": bundle.earnings_quality.accruals.flag,
+            },
+            "warnings": bundle.earnings_quality.warnings,
+        },
         "dupont": [
             {
                 "year": y.year,

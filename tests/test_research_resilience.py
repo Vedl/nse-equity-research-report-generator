@@ -92,6 +92,13 @@ def test_reliance_returns_valid_report_object(
     assert bundle.beneish is not None
     assert bundle.governance is not None
     assert bundle.governance.metrics  # at least the traffic-light rows
+    # Earnings-quality / financial-reliability overlay is wired through.
+    eq = bundle.earnings_quality
+    assert eq is not None
+    assert eq.verdict in {"Green", "Amber", "Red", "Unrated"}
+    assert len(eq.components) == 3
+    # The offline provider returns no peers → sector percentile cleanly absent.
+    assert eq.accrual_sector_percentile is None
 
 
 def test_pipeline_resilient_to_non_numeric_insider_holding(
