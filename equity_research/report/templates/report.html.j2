@@ -3,7 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+/*
+ * No remote web-font @import here.  WeasyPrint resolves @import URLs at render
+ * time; fetching Google Fonts from inside the PDF subprocess made generation
+ * depend on outbound HTTPS to the font CDN — slow locally (~20s) and prone to
+ * stalling until the render timeout on a sandboxed Railway dyno, which then
+ * fell back to HTML and surfaced as a 503 "PDF unavailable".  The font-family
+ * stacks below fall back to bundled system faces (Georgia / Helvetica / Menlo),
+ * so the report renders fully offline with no network dependency.
+ */
 
 /* ── Design tokens ─────────────────────────────────────────── */
 :root {

@@ -14,11 +14,32 @@ group in Yahoo's data model. This is documented in the report footnote.
 from __future__ import annotations
 
 import logging
+import math
 from dataclasses import dataclass, field
 
 from equity_research.analysis.india_valuation import _PSU_TICKERS
 
 logger = logging.getLogger(__name__)
+
+
+def _as_holding_pct(raw: object) -> float | None:
+    """Coerce a raw yfinance holding value to a percentage float.
+
+    yfinance returns fractions (0.51 → 51%) but occasionally surfaces a
+    non-numeric placeholder (e.g. the string "NA") or NaN for Indian listcos
+    where the data is unavailable.  Such values must degrade to ``None`` rather
+    than blow up the governance scorecard — a single bad field here previously
+    raised ``TypeError`` and 500'd the entire research endpoint.
+    """
+    if raw is None:
+        return None
+    try:
+        v = float(raw)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(v):
+        return None
+    return v * 100 if v <= 1.0 else v
 
 
 @dataclass
@@ -58,9 +79,8 @@ def governance_scorecard(profile: dict) -> GovernanceResult:
     is_psu = ticker_base in _PSU_TICKERS
 
     # --- Promoter holding (insider % proxy) ---
-    promoter = profile.get("held_percent_insiders")
-    if promoter is not None:
-        pct = float(promoter) * 100 if promoter <= 1.0 else float(promoter)
+    pct = _as_holding_pct(profile.get("held_percent_insiders"))
+    if pct is not None:
         if 40 <= pct < 75:
             light = "green"
             note = "Healthy promoter alignment"
@@ -81,9 +101,8 @@ def governance_scorecard(profile: dict) -> GovernanceResult:
                                         "Not available via automated pipeline"))
 
     # --- Institutional holding ---
-    inst = profile.get("held_percent_institutions")
-    if inst is not None:
-        pct = float(inst) * 100 if inst <= 1.0 else float(inst)
+    pct = _as_holding_pct(profile.get("held_percent_institutions"))
+    if pct is not None:
         light = "green" if pct > 25 else ("amber" if pct >= 10 else "red")
         note = "Strong institutional sponsorship" if light == "green" else (
             "Moderate institutional interest" if light == "amber" else "Thin institutional coverage")

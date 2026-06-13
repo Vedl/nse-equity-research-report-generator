@@ -836,9 +836,16 @@ def research(ticker: str, request: Request) -> dict:
         logger.error(
             "Research failed for %s:\n%s", ticker_ns, traceback.format_exc()
         )
+        # A single company failing must surface as a clean, structured error —
+        # never an unhandled 500.  502 (upstream data failure) distinguishes a
+        # market-data problem from a bug in this service.
         raise HTTPException(
-            status_code=500,
-            detail=f"Analysis failed for '{ticker_ns}': {exc}",
+            status_code=502,
+            detail={
+                "error": "analysis_failed",
+                "ticker": ticker_ns,
+                "message": str(exc),
+            },
         ) from exc
 
     _research_cache[ticker_ns] = result

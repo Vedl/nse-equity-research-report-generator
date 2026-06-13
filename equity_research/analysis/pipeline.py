@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from typing import Callable, TypeVar
 
 import pandas as pd
 
@@ -48,6 +49,26 @@ from equity_research.config import AppConfig
 from equity_research.data.provider import DataProvider
 
 logger = logging.getLogger(__name__)
+
+_T = TypeVar("_T")
+
+
+def _safe(label: str, fn: Callable[[], _T], fallback: Callable[[], _T]) -> _T:
+    """Run a best-effort analysis stage in isolation.
+
+    Quality/governance screens are supplementary: a single one raising on a
+    malformed or missing yfinance field for one company must NOT take down the
+    whole research report (it previously propagated out and 500'd the
+    ``/api/research`` endpoint).  On failure we log and return the stage's own
+    empty-input result, so that section simply renders as "unavailable".
+    """
+    try:
+        return fn()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "Research stage '%s' failed (%s) — section marked unavailable", label, exc
+        )
+        return fallback()
 
 
 @dataclass
@@ -139,20 +160,61 @@ def run_research_pipeline(
     # --- Secondary model ---
     secondary_model, secondary_value = _secondary_value(val, profile, financials, config)
 
-    # --- Quality screens ---
+    # --- Quality screens (each best-effort: one failure must not 500 the report) ---
     is_financial = val.model_used in ("financial", "excess_return")
-    piotroski = piotroski_f_score(income, balance, cashflow)
-    beneish = beneish_m_score(income, balance, cashflow)
-    altman = altman_z_score(income, balance, is_financial=is_financial)
-    accruals = accruals_analysis(income, balance, cashflow)
-    dupont = dupont_decomposition(income, balance)
-    gpa = gross_profitability(income, balance)
-    ccc = cash_conversion_cycle(income, balance)
-    governance = governance_scorecard(profile)
+    _empty = pd.DataFrame()
+    piotroski = _safe(
+        "piotroski",
+        lambda: piotroski_f_score(income, balance, cashflow),
+        lambda: piotroski_f_score(_empty, _empty, _empty),
+    )
+    beneish = _safe(
+        "beneish",
+        lambda: beneish_m_score(income, balance, cashflow),
+        lambda: beneish_m_score(_empty, _empty, _empty),
+    )
+    altman = _safe(
+        "altman",
+        lambda: altman_z_score(income, balance, is_financial=is_financial),
+        lambda: altman_z_score(_empty, _empty, is_financial=is_financial),
+    )
+    accruals = _safe(
+        "accruals",
+        lambda: accruals_analysis(income, balance, cashflow),
+        lambda: accruals_analysis(_empty, _empty, _empty),
+    )
+    dupont = _safe(
+        "dupont",
+        lambda: dupont_decomposition(income, balance),
+        lambda: dupont_decomposition(_empty, _empty),
+    )
+    gpa = _safe(
+        "gross_profitability",
+        lambda: gross_profitability(income, balance),
+        lambda: gross_profitability(_empty, _empty),
+    )
+    ccc = _safe(
+        "cash_conversion_cycle",
+        lambda: cash_conversion_cycle(income, balance),
+        lambda: cash_conversion_cycle(_empty, _empty),
+    )
+    governance = _safe(
+        "governance",
+        lambda: governance_scorecard(profile),
+        lambda: governance_scorecard({}),
+    )
 
     wacc = _extract_wacc(val, config)
-    roics = roic_series(income, balance, config.market.tax_rate)
-    caq = capital_allocation_score(income, balance, cashflow, roics, wacc)
+    roics = _safe(
+        "roic_series",
+        lambda: roic_series(income, balance, config.market.tax_rate),
+        list,
+    )
+    caq = _safe(
+        "capital_allocation",
+        lambda: capital_allocation_score(income, balance, cashflow, roics, wacc),
+        lambda: capital_allocation_score(_empty, _empty, _empty, [], wacc),
+    )
 
     # Value-driver cross-check (skip for financials — IC undefined for banks)
     value_driver: ValueDriverResult | None = None

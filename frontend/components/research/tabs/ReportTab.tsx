@@ -12,7 +12,7 @@ import {
   ArrowRight,
   Circle,
 } from "lucide-react"
-import { normaliseTicker } from "@/lib/api"
+import { normaliseTicker, browserApiUrl } from "@/lib/api"
 
 interface Props {
   ticker: string
@@ -57,7 +57,9 @@ export function ReportTab({ ticker }: Props) {
     setErrMsg("")
 
     const t = normaliseTicker(ticker)
-    const es = new EventSource(`/api/report/${t}/stream`)
+    // Hit the backend directly in production (browserApiUrl) — SSE proxied
+    // through the Vercel rewrite gets buffered and never streams.
+    const es = new EventSource(browserApiUrl(`/api/report/${t}/stream`))
     esRef.current = es
 
     es.addEventListener("progress", (ev) => {
@@ -71,7 +73,9 @@ export function ReportTab({ ticker }: Props) {
       const { url } = JSON.parse((ev as MessageEvent).data)
       setCompletedSteps(STEPS)
       setCurrentStep(null)
-      setPdfUrl(url)
+      // Resolve the backend-relative file path to an absolute URL so the
+      // download link and preview iframe load from Railway, not the Vercel origin.
+      setPdfUrl(browserApiUrl(url))
       setState("done")
       es.close()
     })
