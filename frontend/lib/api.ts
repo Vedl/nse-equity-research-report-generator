@@ -29,6 +29,24 @@ const API_BASE =
 /** Absolute backend URL for server components that need it directly. */
 export const API_URL = API_BASE
 
+/**
+ * Browser-side base for the heavy report endpoints (SSE progress stream + PDF
+ * download).  These must reach the backend directly in production: streaming
+ * responses proxied through the Next.js rewrite get buffered/timed-out by
+ * Vercel, so the download worked on localhost (no proxy in between) but not on
+ * the deployed site.  NEXT_PUBLIC_API_URL is the public Railway URL set in the
+ * Vercel dashboard; when unset (local dev) we fall back to a relative path so
+ * the next.config rewrite proxies to localhost:8000.
+ */
+export const BROWSER_API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ""
+
+/** Resolve an API path to an absolute backend URL for the browser. */
+export function browserApiUrl(path: string): string {
+  // Guard against accidentally double-prefixing an already-absolute URL.
+  if (/^https?:\/\//i.test(path)) return path
+  return `${BROWSER_API_BASE}${path}`
+}
+
 /** Normalise a ticker: upper-case, ensure .NS suffix. */
 export function normaliseTicker(ticker: string): string {
   const t = ticker.toUpperCase().trim()

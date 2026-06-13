@@ -14,6 +14,8 @@ nixPkgs = [
   "gdk-pixbuf",    # image loading
   "libffi",        # CFFI foreign-function interface
   "fontconfig",    # font discovery
+  "liberation_ttf", # font faces (Helvetica/Arial/Times metric-compatible)
+  "dejavu_fonts",   # generic serif/sans/mono fallback coverage
 ]
 aptPkgs = [
   "shared-mime-info",   # MIME type database used by gdk-pixbuf
