@@ -243,6 +243,10 @@ export const ResearchSchema = z.object({
         narrative_bullets: z.array(z.string()),
         diverges_materially: z.boolean(),
       })
+      // SOTP-routed conglomerates (e.g. RELIANCE) skip the India adjustment,
+      // so the backend emits `india: null`. Must be nullable like every other
+      // optional valuation sub-object, not just optional.
+      .nullable()
       .optional(),
     broker_target_price: nullableNum.optional(),
     broker_recommendation: z.string().nullable().optional(),
