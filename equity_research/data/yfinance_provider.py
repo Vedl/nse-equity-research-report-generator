@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import logging
 import math
+import os
+import random
+import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, TypeVar
 
 import pandas as pd
 import yfinance as yf
@@ -15,6 +18,71 @@ from equity_research.data import cache as file_cache
 from equity_research.data.provider import DataProvider
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Transient-failure retry/backoff (yfinance rate-limits aggressively on a
+# public Railway IP).  Tunable via env so a bulk universe sweep can be more
+# patient than the latency-sensitive request path.
+# ---------------------------------------------------------------------------
+
+_RETRY_ATTEMPTS = int(os.getenv("YF_RETRY_ATTEMPTS", "3"))
+_RETRY_BASE_DELAY = float(os.getenv("YF_RETRY_BASE_DELAY", "1.0"))
+
+# Substrings that mark a retryable (transient) failure rather than a permanent
+# "this ticker has no data" outcome.
+_TRANSIENT_MARKERS = (
+    "rate", "429", "too many", "timeout", "timed out",
+    "connection", "temporarily", "unavailable", "503", "502",
+)
+
+_R = TypeVar("_R")
+
+
+def _is_transient(exc: Exception) -> bool:
+    return any(m in str(exc).lower() for m in _TRANSIENT_MARKERS)
+
+
+def _with_retries(
+    fn: Callable[[], _R],
+    *,
+    what: str,
+    is_valid: Callable[[_R], bool] | None = None,
+    attempts: int = _RETRY_ATTEMPTS,
+    base_delay: float = _RETRY_BASE_DELAY,
+) -> _R:
+    """Call *fn* with exponential backoff + jitter on transient failures.
+
+    Retries when *fn* raises, or when ``is_valid(result)`` is falsy — yfinance
+    signals a rate-limit by returning an empty/sparse payload rather than
+    raising, so an ``is_valid`` predicate lets callers treat that as retryable.
+    Re-raises the last exception only if every attempt raised; otherwise returns
+    the final (possibly still-invalid) result so callers can degrade gracefully.
+    """
+    last_exc: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            result = fn()
+            if is_valid is None or is_valid(result):
+                return result
+            last_exc = None
+            if attempt == attempts:
+                return result  # hand back whatever we got; caller degrades
+        except Exception as exc:  # noqa: BLE001
+            last_exc = exc
+            if attempt == attempts:
+                raise
+            if not _is_transient(exc):
+                # A permanent error won't be cured by waiting — fail fast.
+                raise
+        delay = base_delay * (2 ** (attempt - 1)) + random.uniform(0.0, 0.5)
+        logger.warning(
+            "%s: attempt %d/%d failed (%s) — backing off %.1fs",
+            what, attempt, attempts, last_exc or "empty/sparse response", delay,
+        )
+        time.sleep(delay)
+    if last_exc is not None:
+        raise last_exc
+    return fn()  # pragma: no cover — unreachable, satisfies type checker
 
 # ---------------------------------------------------------------------------
 # Currency conversion helper
@@ -205,18 +273,28 @@ _PROFILE_KEYS: list[tuple[str, str]] = [
 ]
 
 
+# NSE tickers that yfinance lists under a different (usually pre-rename) symbol.
+# Without this remap, recently-renamed-but-long-listed names resolve to no data
+# even though full history exists under the legacy symbol.  Verified against live
+# Yahoo Finance; in a restricted/sandboxed environment the alias may itself be
+# uncovered, in which case the name simply stays unresolved (no worse than before).
+_SYMBOL_OVERRIDES: dict[str, str] = {
+    "UNITDSPR.NS": "MCDOWELL-N.NS",  # United Spirits — Yahoo keeps the legacy McDowell symbol
+}
+
+
 def _normalize_ticker(ticker: str) -> str:
-    """Ensure ticker has the .NS suffix for NSE stocks.
+    """Ensure ticker has the .NS suffix for NSE stocks, applying symbol overrides.
 
     Index symbols (^NSEI, ^CRSLDX, …) and FX pairs (USDINR=X) pass through
-    unchanged — only equity tickers get the .NS suffix.
+    unchanged — only equity tickers get the .NS suffix.  Known NSE→Yahoo symbol
+    renames are remapped via ``_SYMBOL_OVERRIDES``.
     """
     upper = ticker.upper().strip()
     if upper.startswith("^") or upper.endswith("=X"):
         return upper
-    if not upper.endswith(".NS"):
-        return f"{upper}.NS"
-    return upper
+    norm = upper if upper.endswith(".NS") else f"{upper}.NS"
+    return _SYMBOL_OVERRIDES.get(norm, norm)
 
 
 def _is_nan(v: Any) -> bool:
@@ -439,14 +517,18 @@ class YFinanceProvider(DataProvider):
                 logger.warning("Prices cache decode failed for %s: %s", norm_ticker, exc)
 
         try:
-            df = yf.Ticker(norm_ticker).history(period=period, auto_adjust=True)
+            df = _with_retries(
+                lambda: yf.Ticker(norm_ticker).history(period=period, auto_adjust=True),
+                what=f"prices[{norm_ticker},{period}]",
+                is_valid=lambda d: d is not None and not d.empty,
+            )
             if df.empty:
                 logger.warning("No price data returned for %s (period=%s)", norm_ticker, period)
             else:
                 file_cache.put(cache_key, file_cache.df_to_payload(df))
             return df
         except Exception as exc:  # noqa: BLE001
-            logger.error("Failed to fetch prices for %s: %s", norm_ticker, exc)
+            logger.error("Failed to fetch prices for %s after retries: %s", norm_ticker, exc)
             return pd.DataFrame()
 
     def get_peers(self, ticker: str) -> list[str]:
@@ -509,15 +591,23 @@ class YFinanceProvider(DataProvider):
     # ------------------------------------------------------------------
 
     def _fetch_info(self, ticker: str) -> dict:
+        # A sparse (<5 key) dict is yfinance's tell for a rate-limit, so treat it
+        # as retryable; a genuinely-uncovered ticker also returns sparse and will
+        # simply exhaust the (small) retry budget before degrading to {}.
+        def _ok(info: dict) -> bool:
+            return bool(info) and len(info) >= 5
+
         try:
-            info = yf.Ticker(ticker).info
-            if not info or len(info) < 5:
-                logger.warning("Sparse or empty info dict for %s", ticker)
-                return {}
-            return info
+            info = _with_retries(
+                lambda: yf.Ticker(ticker).info, what=f"info[{ticker}]", is_valid=_ok
+            )
         except Exception as exc:  # noqa: BLE001
-            logger.error("Failed to fetch info for %s: %s", ticker, exc)
+            logger.error("Failed to fetch info for %s after retries: %s", ticker, exc)
             return {}
+        if not _ok(info):
+            logger.warning("Sparse or empty info dict for %s (rate-limited or no coverage)", ticker)
+            return {}
+        return info
 
     def _get_financial_currency(self, ticker: str) -> str:
         """Return the currency that this ticker's financial statements use.
@@ -534,15 +624,24 @@ class YFinanceProvider(DataProvider):
     def _safe_fetch(
         t: yf.Ticker, attr: str, ticker_label: str
     ) -> pd.DataFrame | None:
-        """Fetch a yfinance DataFrame attribute, returning None on failure."""
+        """Fetch a yfinance DataFrame attribute, returning None on failure.
+
+        An empty statement DataFrame is yfinance's rate-limit / no-coverage
+        signal, so it is treated as retryable before we degrade to None.
+        """
+        def _ok(df: pd.DataFrame | None) -> bool:
+            return df is not None and not df.empty
+
         try:
-            df = getattr(t, attr)
-            return df if df is not None and not df.empty else None
-        except Exception as exc:  # noqa: BLE001
-            logger.error(
-                "Failed to fetch %s for %s: %s", attr, ticker_label, exc
+            df = _with_retries(
+                lambda: getattr(t, attr),
+                what=f"{attr}[{ticker_label}]",
+                is_valid=_ok,
             )
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Failed to fetch %s for %s after retries: %s", attr, ticker_label, exc)
             return None
+        return df if _ok(df) else None
 
     def _load_nifty500(self) -> pd.DataFrame:
         """Load and cache the bundled Nifty 500 CSV."""

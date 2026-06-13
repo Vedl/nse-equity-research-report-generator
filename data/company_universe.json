@@ -1638,50 +1638,6 @@
   "nse_symbol": "DRREDDY",
   "bse_code": null
  },
- "DUMMYVEDL1": {
-  "name": "Dummy Vedanta Ltd. 1",
-  "sector": "Metals & Mining",
-  "industry": "Metals & Mining",
-  "market_cap_band": null,
-  "valuation_family": "METALS_MINING",
-  "primary_model": "ev_ebitda_comps",
-  "yfinance_ticker": "DUMMYVEDL1.NS",
-  "nse_symbol": "DUMMYVEDL1",
-  "bse_code": null
- },
- "DUMMYVEDL2": {
-  "name": "Dummy Vedanta Ltd. 2",
-  "sector": "Power",
-  "industry": "Power",
-  "market_cap_band": null,
-  "valuation_family": "DEFAULT",
-  "primary_model": "fcff_dcf",
-  "yfinance_ticker": "DUMMYVEDL2.NS",
-  "nse_symbol": "DUMMYVEDL2",
-  "bse_code": null
- },
- "DUMMYVEDL3": {
-  "name": "Dummy Vedanta Ltd. 3",
-  "sector": "Oil Gas & Consumable Fuels",
-  "industry": "Oil Gas & Consumable Fuels",
-  "market_cap_band": null,
-  "valuation_family": "DEFAULT",
-  "primary_model": "fcff_dcf",
-  "yfinance_ticker": "DUMMYVEDL3.NS",
-  "nse_symbol": "DUMMYVEDL3",
-  "bse_code": null
- },
- "DUMMYVEDL4": {
-  "name": "Dummy Vedanta Ltd. 4",
-  "sector": "Metals & Mining",
-  "industry": "Metals & Mining",
-  "market_cap_band": null,
-  "valuation_family": "METALS_MINING",
-  "primary_model": "ev_ebitda_comps",
-  "yfinance_ticker": "DUMMYVEDL4.NS",
-  "nse_symbol": "DUMMYVEDL4",
-  "bse_code": null
- },
  "EIDPARRY": {
   "name": "E.I.D. Parry (India) Ltd.",
   "sector": "Basic Materials",
