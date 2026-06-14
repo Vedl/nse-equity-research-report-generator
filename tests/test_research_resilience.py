@@ -99,6 +99,14 @@ def test_reliance_returns_valid_report_object(
     assert len(eq.components) == 3
     # The offline provider returns no peers → sector percentile cleanly absent.
     assert eq.accrual_sector_percentile is None
+    # Cost-of-capital decomposition is wired through and internally consistent.
+    coc = bundle.cost_of_capital
+    assert coc is not None
+    assert 0.0 < coc.wacc < 0.5
+    assert coc.equity_weight + coc.debt_weight == pytest.approx(1.0)
+    # No peers offline → bottom-up unavailable → engine's fallback beta retained.
+    assert coc.beta.bottom_up_beta is None
+    assert coc.beta.beta_used == pytest.approx(bundle.beta.beta)
 
 
 def test_pipeline_resilient_to_non_numeric_insider_holding(

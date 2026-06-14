@@ -650,10 +650,56 @@ def _build_research(ticker_ns: str) -> dict:
     elapsed = time.monotonic() - t0
     logger.info("Research for %s assembled in %.1f s", ticker_ns, elapsed)
 
+    coc = bundle.cost_of_capital
+    cost_of_capital_out = {
+        "wacc":                _clean(coc.wacc),
+        "risk_free_rate":      _clean(coc.risk_free_rate),
+        "equity_risk_premium": _clean(coc.equity_risk_premium),
+        "tax_rate":            _clean(coc.tax_rate),
+        "equity_value":        _clean(coc.equity_value),
+        "debt_value":          _clean(coc.debt_value),
+        "debt_value_is_book":  coc.debt_value_is_book,
+        "equity_weight":       _clean(coc.equity_weight),
+        "debt_weight":         _clean(coc.debt_weight),
+        "beta": {
+            "raw_regression_beta":  _clean(coc.beta.raw_regression_beta),
+            "raw_beta_obs":         coc.beta.raw_beta_obs,
+            "raw_beta_source":      coc.beta.raw_beta_source,
+            "blume_beta":           _clean(coc.beta.blume_beta),
+            "bottom_up_beta":       _clean(coc.beta.bottom_up_beta),
+            "avg_unlevered_beta":   _clean(coc.beta.avg_unlevered_beta),
+            "unlevered_peer_betas": [_clean(b) for b in coc.beta.unlevered_peer_betas],
+            "target_debt_to_equity": _clean(coc.beta.target_debt_to_equity),
+            "peer_count":           coc.beta.peer_count,
+            "beta_used":            _clean(coc.beta.beta_used),
+            "beta_used_source":     coc.beta.beta_used_source,
+        },
+        "cost_of_equity": {
+            "capm_ke":           _clean(coc.cost_of_equity.capm_ke),
+            "capm_ke_bottom_up": _clean(coc.cost_of_equity.capm_ke_bottom_up),
+            "beta_used":      _clean(coc.cost_of_equity.beta_used),
+            "size_premium":   _clean(coc.cost_of_equity.size_premium),
+            "implied_ke":     _clean(coc.cost_of_equity.implied_ke),
+            "implied_method": coc.cost_of_equity.implied_method,
+            "implied_gap":    _clean(coc.cost_of_equity.implied_gap),
+        },
+        "cost_of_debt": {
+            "kd_interest_based": _clean(coc.cost_of_debt.kd_interest_based),
+            "kd_synthetic":      _clean(coc.cost_of_debt.kd_synthetic),
+            "interest_coverage": _clean(coc.cost_of_debt.interest_coverage),
+            "synthetic_spread":  _clean(coc.cost_of_debt.synthetic_spread),
+            "kd_pretax_used":    _clean(coc.cost_of_debt.kd_pretax_used),
+            "kd_aftertax_used":  _clean(coc.cost_of_debt.kd_aftertax_used),
+            "method_used":       coc.cost_of_debt.method_used,
+        },
+        "warnings": coc.warnings,
+    }
+
     return {
         "company":    company,
         "conviction": conviction_out,
         "quality":    quality_out,
+        "cost_of_capital": cost_of_capital_out,
         "price":      price_section,
         "financials": {
             "income_statement": income_records,

@@ -15,6 +15,11 @@ from typing import Callable, TypeVar
 import pandas as pd
 
 from equity_research.analysis.beta import BetaResult, regression_beta
+from equity_research.analysis.cost_of_capital import (
+    CostOfCapital,
+    compute_cost_of_capital,
+    weekly_regression_beta,
+)
 from equity_research.analysis.conviction import (
     ConvictionResult,
     assign_rating,
@@ -83,6 +88,7 @@ class ResearchBundle:
     valuation: ValuationResult
     conviction: ConvictionResult
     beta: BetaResult
+    cost_of_capital: CostOfCapital
     piotroski: PiotroskiResult
     beneish: BeneishResult
     altman: AltmanResult
@@ -132,6 +138,48 @@ def _sector_quality_samples(
         except Exception as exc:  # noqa: BLE001
             logger.info("Sector quality sample for %s skipped (%s)", pt, exc)
     return accrual_samples, fscore_samples
+
+
+def _cost_of_capital_peer_samples(
+    provider: DataProvider,
+    ticker: str,
+    *,
+    cap: int = 5,
+) -> list[tuple[float, float]]:
+    """Best-effort (levered beta, D/E) pairs for the bottom-up beta.
+
+    Each peer's levered beta is estimated by the SAME 2y-weekly regression used
+    for the target — yfinance's vendor ``beta`` field is unreliable for Indian
+    listings (often understated 3-5×), so it is not used.  D/E is book debt over
+    market equity.  Peers whose regression is unavailable are skipped; a thin
+    sample simply means the bottom-up beta is unavailable.
+    """
+    samples: list[tuple[float, float]] = []
+    try:
+        peers = provider.get_peers(ticker) or []
+    except Exception as exc:  # noqa: BLE001
+        logger.info("Cost-of-capital peer lookup failed (%s)", exc)
+        return samples
+
+    for pt in peers[:cap]:
+        try:
+            bl, n, _src = weekly_regression_beta(provider, pt)
+            if bl is None or n < 1:
+                continue
+            pp = provider.get_profile(pt)
+            mc = pp.get("market_cap")
+            debt = pp.get("total_debt")
+            if not (isinstance(mc, (int, float)) and float(mc) > 0):
+                continue
+            de = (
+                float(debt) / float(mc)
+                if isinstance(debt, (int, float)) and float(debt) > 0
+                else 0.0
+            )
+            samples.append((float(bl), de))
+        except Exception as exc:  # noqa: BLE001
+            logger.info("Cost-of-capital peer %s skipped (%s)", pt, exc)
+    return samples
 
 
 def _clean_data_years(income: pd.DataFrame) -> int:
@@ -197,6 +245,42 @@ def run_research_pipeline(
     profile = dict(profile)
     profile["beta"] = beta_res.beta   # CAPM downstream uses the estimated beta
     logger.info("Beta for %s: %.2f (%s)", ticker, beta_res.beta, beta_res.source)
+
+    # --- Cost-of-capital decomposition (full WACC build-up) ---
+    # Computed BEFORE valuation so the bottom-up beta (when peers are available)
+    # becomes the single canonical beta the DCF discounts at; for data-poor names
+    # with no peers it falls back to the 5y-monthly/sector beta above, leaving the
+    # discount rate unchanged.
+    raw_beta, raw_obs, raw_src = _safe(
+        "weekly_regression_beta",
+        lambda: weekly_regression_beta(provider, ticker),
+        lambda: (None, 0, ""),
+    )
+    coc_peers = _safe(
+        "cost_of_capital_peers",
+        lambda: _cost_of_capital_peer_samples(provider, ticker),
+        list,
+    )
+    cost_of_capital = _safe(
+        "cost_of_capital",
+        lambda: compute_cost_of_capital(
+            profile, income, balance, config,
+            regression_beta=raw_beta,
+            regression_beta_obs=raw_obs,
+            regression_beta_source=raw_src,
+            fallback_beta=beta_res.beta,
+            peer_beta_de=coc_peers,
+        ),
+        lambda: compute_cost_of_capital(
+            profile, income, balance, config, fallback_beta=beta_res.beta
+        ),
+    )
+    profile["beta"] = cost_of_capital.beta.beta_used
+    logger.info(
+        "Beta used for %s: %.2f (%s); WACC=%.4f",
+        ticker, cost_of_capital.beta.beta_used,
+        cost_of_capital.beta.beta_used_source, cost_of_capital.wacc,
+    )
 
     # --- Primary valuation (router + intrinsic + relative cross-check) ---
     val = run_valuation(profile, financials, provider, config)
@@ -366,6 +450,7 @@ def run_research_pipeline(
         valuation=val,
         conviction=conviction,
         beta=beta_res,
+        cost_of_capital=cost_of_capital,
         piotroski=piotroski,
         beneish=beneish,
         altman=altman,
