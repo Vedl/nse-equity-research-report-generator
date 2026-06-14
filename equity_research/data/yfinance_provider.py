@@ -191,6 +191,18 @@ _BALANCE_MAP: dict[str, list[str]] = {
         "Cash Cash Equivalents And Short Term Investments",
         "Cash And Short Term Investments",
     ],
+    # Broad treasury line (cash + ST investments) and the standalone ST-investment
+    # line. Consumed by the Sloan/RSST NOA computation, which must strip *all*
+    # financial assets — not just narrow cash — from operating assets. Kept
+    # separate from ``cash_and_equivalents`` (which stays narrow for FCFF/net-debt).
+    "cash_and_short_term_investments": [
+        "Cash Cash Equivalents And Short Term Investments",
+        "Cash And Short Term Investments",
+    ],
+    "short_term_investments": [
+        "Other Short Term Investments",
+        "Short Term Investments",
+    ],
     "inventory": ["Inventory"],
     "accounts_receivable": ["Accounts Receivable", "Net Receivables"],
     "current_liabilities": ["Current Liabilities", "Total Current Liabilities"],

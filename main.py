@@ -591,6 +591,7 @@ def _build_research(ticker_ns: str) -> dict:
             "accruals": {
                 "noa_latest": _clean(bundle.earnings_quality.accruals.noa_latest),
                 "noa_prior": _clean(bundle.earnings_quality.accruals.noa_prior),
+                "avg_total_assets": _clean(bundle.earnings_quality.accruals.avg_total_assets),
                 "bs_accrual_ratio": _clean(bundle.earnings_quality.accruals.bs_accrual_ratio),
                 "cf_accrual_ratio": _clean(bundle.earnings_quality.accruals.cf_accrual_ratio),
                 "headline_ratio": _clean(bundle.earnings_quality.accruals.headline_ratio),

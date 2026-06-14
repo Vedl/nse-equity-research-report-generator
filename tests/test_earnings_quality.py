@@ -33,8 +33,9 @@ def _df(cols: dict[str, list[float]]) -> pd.DataFrame:
 # CLEAN company — every figure hand-computed in the assertions below
 # ---------------------------------------------------------------------------
 # NOA_2023 = (1000-200)-(400-150) = 550 ; NOA_2024 = (1060-230)-(410-150) = 570
-# avg NOA  = 560 ; BS accrual = (570-550)/560 = 20/560
-# CF accrual = (NI - CFO - CFI)/avg = (100-140-(-50))/560 = 10/560
+# avg NOA  = 560 ; BS accrual (secondary) = (570-550)/560 = 20/560
+# PRIMARY (Hribar-Collins) = (NI - CFO)/avg total assets
+#        = (100-140)/((1000+1060)/2) = -40/1030  (negative → clean)
 
 
 @pytest.fixture
@@ -83,8 +84,12 @@ def clean_cashflow() -> pd.DataFrame:
 # WEAK company
 # ---------------------------------------------------------------------------
 # NOA_2023 = (1000-100)-(500-200) = 600 ; NOA_2024 = (1400-80)-(560-300) = 1060
-# avg NOA  = 830 ; BS accrual = (1060-600)/830 = 460/830
-# CF accrual = (120-30-(-350))/830 = 440/830
+# avg NOA  = 830 ; BS accrual (secondary) = (1060-600)/830 = 460/830 → 55% (RED),
+#   but this is inflated by capex/NOA growth (net PPE 400→700) — a benign reason.
+# PRIMARY (Hribar-Collins) = (NI - CFO)/avg total assets
+#        = (120-30)/((1000+1400)/2) = 90/1200 = 7.5% → AMBER.
+# The company is still Red overall, driven by Beneish (manipulation) + Piotroski
+# (weak fundamentals), NOT by a polluted accrual figure.
 
 
 @pytest.fixture
@@ -129,6 +134,64 @@ def weak_cashflow() -> pd.DataFrame:
     })
 
 
+# ---------------------------------------------------------------------------
+# TREASURY-HEAVY company (the TCS / Indian-IT profile that used to false-positive)
+# ---------------------------------------------------------------------------
+# Huge short-term investments (treasury), roughly flat YoY; CFO ≥ NI every year;
+# operating assets growing modestly from receivables.  Must NOT come out red.
+#
+# NOA strips cash AND ST investments via the broad line (417 / 414):
+#   NOA_2023 = (1600-417)-(639-94)  = 1183-545 = 638
+#   NOA_2024 = (1820-414)-(739-113) = 1406-626 = 780      (NOT 1130 — STI removed)
+# PRIMARY (Hribar-Collins) = (NI-CFO)/avgTA = (486-489)/((1600+1820)/2)
+#                          = -3/1710 ≈ -0.18%  → green
+# Old polluted form (NI-CFO-CFI)/avgNOA = (486-489+128)/709 = 17.6% would be RED.
+
+
+@pytest.fixture
+def treasury_income() -> pd.DataFrame:
+    return _df({
+        "total_revenue":             [2200, 2400],
+        "cost_of_revenue":           [1400, 1500],
+        "gross_profit":              [800, 900],
+        "operating_income":          [560, 620],
+        "ebitda":                    [600, 660],
+        "net_income":                [450, 486],
+        "pretax_income":             [580, 640],
+        "interest_expense":          [5, 5],
+        "selling_general_admin":     [240, 280],
+        "depreciation_amortization": [40, 41],
+        "basic_average_shares":      [370, 370],
+    })
+
+
+@pytest.fixture
+def treasury_balance() -> pd.DataFrame:
+    return _df({
+        "total_assets":                     [1600, 1820],
+        "cash_and_equivalents":             [83, 64],     # narrow cash only
+        "cash_and_short_term_investments":  [417, 414],   # broad treasury line
+        "short_term_investments":           [334, 350],   # standalone STI
+        "total_liabilities":                [639, 739],
+        "total_debt":                       [94, 113],
+        "long_term_debt":                   [40, 45],
+        "current_assets":                   [900, 1000],
+        "current_liabilities":              [500, 560],
+        "net_ppe":                          [120, 130],
+        "accounts_receivable":              [500, 576],
+    })
+
+
+@pytest.fixture
+def treasury_cashflow() -> pd.DataFrame:
+    return _df({
+        "operating_cash_flow":  [470, 489],    # CFO ≥ NI
+        "investing_cash_flow":  [-100, -128],  # treasury deployment — must be ignored
+        "capital_expenditure":  [-35, -41],
+        "free_cash_flow":       [435, 448],
+    })
+
+
 # ===========================================================================
 # Sloan accruals — exact hand-computed values
 # ===========================================================================
@@ -139,9 +202,14 @@ def test_clean_sloan_accruals(clean_income, clean_balance, clean_cashflow):
     assert acc.noa_latest == pytest.approx(570.0)
     assert acc.noa_prior == pytest.approx(550.0)
     assert acc.avg_noa == pytest.approx(560.0)
+    assert acc.avg_total_assets == pytest.approx(1030.0)
+    # secondary ΔNOA ratio unchanged
     assert acc.bs_accrual_ratio == pytest.approx(20.0 / 560.0)
-    assert acc.cf_accrual_ratio == pytest.approx(10.0 / 560.0)
-    # 20/560 = 3.57% ≤ 5% → green
+    # PRIMARY Hribar-Collins operating accrual = (100-140)/1030 = -40/1030
+    assert acc.cf_accrual_ratio == pytest.approx(-40.0 / 1030.0)
+    # headline is the PRIMARY (CF) measure
+    assert acc.headline_ratio == pytest.approx(-40.0 / 1030.0)
+    # -3.9% (negative, CFO > NI) → green
     assert acc.flag == "green"
 
 
@@ -150,10 +218,13 @@ def test_weak_sloan_accruals(weak_income, weak_balance, weak_cashflow):
     assert acc.noa_latest == pytest.approx(1060.0)
     assert acc.noa_prior == pytest.approx(600.0)
     assert acc.avg_noa == pytest.approx(830.0)
+    assert acc.avg_total_assets == pytest.approx(1200.0)
+    # secondary ΔNOA ratio: 460/830 = 55% (red on its own, but capex-inflated)
     assert acc.bs_accrual_ratio == pytest.approx(460.0 / 830.0)
-    assert acc.cf_accrual_ratio == pytest.approx(440.0 / 830.0)
-    # 460/830 = 55% ≫ 10% → red
-    assert acc.flag == "red"
+    # PRIMARY Hribar-Collins: 90/1200 = 7.5% → amber (no longer the polluted 53%)
+    assert acc.cf_accrual_ratio == pytest.approx(90.0 / 1200.0)
+    assert acc.headline_ratio == pytest.approx(90.0 / 1200.0)
+    assert acc.flag == "amber"
 
 
 def test_sloan_accruals_missing_data_is_null():
@@ -164,6 +235,40 @@ def test_sloan_accruals_missing_data_is_null():
     assert acc.bs_accrual_ratio is None
     assert acc.cf_accrual_ratio is None
     assert acc.flag == "na"
+
+
+def test_treasury_heavy_not_false_positive(
+    treasury_income, treasury_balance, treasury_cashflow
+):
+    """TCS-style: huge flat treasury, CFO ≥ NI → must be green, not red."""
+    acc = sloan_accruals(treasury_income, treasury_balance, treasury_cashflow)
+    # Short-term investments ARE stripped from operating assets (else 1130).
+    assert acc.noa_latest == pytest.approx(780.0)
+    assert acc.noa_prior == pytest.approx(638.0)
+    # PRIMARY (Hribar-Collins) is treasury-immune and negative → green.
+    assert acc.cf_accrual_ratio == pytest.approx(-3.0 / 1710.0)
+    assert acc.headline_ratio == pytest.approx(-3.0 / 1710.0)
+    assert acc.flag == "green"
+    # Secondary ΔNOA is elevated (receivables-driven) but does NOT drive the flag.
+    assert acc.bs_accrual_ratio == pytest.approx(142.0 / 709.0)
+
+    res = assess_earnings_quality(treasury_income, treasury_balance, treasury_cashflow)
+    acc_comp = next(c for c in res.components if c.key == "accruals")
+    assert acc_comp.flag == "green"
+    # The whole point: a cash-rich, clean-converting name is NOT flagged Red.
+    assert res.verdict != "Red"
+
+
+def test_operating_accrual_red_when_income_outruns_cash():
+    """Primary flag still goes red when NI ≫ CFO relative to assets."""
+    inc = _df({"net_income": [180, 200]})
+    bal = _df({"total_assets": [1000, 1000], "total_liabilities": [400, 400], "total_debt": [0, 0]})
+    cf = _df({"operating_cash_flow": [60, 50]})
+    acc = sloan_accruals(inc, bal, cf)
+    # (200 - 50) / 1000 = 0.15 → red
+    assert acc.cf_accrual_ratio == pytest.approx(150.0 / 1000.0)
+    assert acc.headline_ratio == pytest.approx(150.0 / 1000.0)
+    assert acc.flag == "red"
 
 
 # ===========================================================================
@@ -225,10 +330,13 @@ def test_clean_verdict_green(clean_income, clean_balance, clean_cashflow):
 
 def test_weak_verdict_red(weak_income, weak_balance, weak_cashflow):
     res = assess_earnings_quality(weak_income, weak_balance, weak_cashflow)
+    # Red is driven by Beneish (manipulation) + Piotroski (weak), the honest
+    # reasons — the operating accrual is now amber, not a polluted red.
     assert res.verdict == "Red"
-    assert res.quality_score == pytest.approx(0.0)
     flags = {c.key: c.flag for c in res.components}
-    assert flags == {"accruals": "red", "beneish": "red", "piotroski": "red"}
+    assert flags == {"accruals": "amber", "beneish": "red", "piotroski": "red"}
+    # score = (amber 1 + red 0 + red 0) / (2 * 3) * 100
+    assert res.quality_score == pytest.approx(100.0 / 6.0)
 
 
 def test_empty_inputs_unrated_no_raise():
@@ -271,7 +379,8 @@ def test_assess_wires_percentiles(clean_income, clean_balance, clean_cashflow):
     )
     assert res.sector == "Technology"
     assert res.peer_sample_size == 5
-    # clean accrual headline = 20/560 ≈ 0.0357; peers >= that: {0.04,0.06,0.08,0.20}=4/5
-    assert res.accrual_sector_percentile == pytest.approx(80.0)
+    # clean headline = -40/1030 ≈ -0.039 (negative); lower-is-better, so it beats
+    # every peer in {0.02,0.04,0.06,0.08,0.20} → 100th percentile
+    assert res.accrual_sector_percentile == pytest.approx(100.0)
     # F-score 9 beats all 5 peers
     assert res.fscore_sector_percentile == pytest.approx(100.0)
