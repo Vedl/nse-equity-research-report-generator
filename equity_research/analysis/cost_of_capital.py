@@ -206,9 +206,11 @@ class CostOfEquity:
     equity_risk_premium: float
     beta_used: float
     size_premium: float
-    implied_ke: float | None
+    implied_ke: float | None            # the PRIMARY implied estimate
     implied_method: str | None          # "gordon" / "residual_income" / None
     implied_gap: float | None           # implied − capm (signed)
+    gordon_implied_ke: float | None     # both estimates exposed regardless of primary
+    rim_implied_ke: float | None
 
 
 @dataclass
@@ -390,8 +392,8 @@ def compute_cost_of_capital(
     pb = profile.get("price_to_book")
     pb = float(pb) if _is_num(pb) else None
     g_cap = config.dcf.terminal_growth_rate
+    payout = 0.0
     if roe is not None:
-        payout = 0.0
         if div_yield and pb and roe > 0:
             # payout = DPS/EPS = (DPS/P)·(P/EPS); EPS/P = ROE/(P/B)  ⇒  payout = y·(P/B)/ROE
             payout = max(0.0, min(1.0, div_yield * pb / roe))
@@ -399,14 +401,27 @@ def compute_cost_of_capital(
     else:
         g_sustain = g_cap
 
-    implied_ke: float | None = None
-    implied_method: str | None = None
     g_imp = gordon_implied_ke(div_yield, g_sustain)
     r_imp = rim_implied_ke(pb, roe, g_sustain)
-    if g_imp is not None and div_yield and div_yield > 0:
+    # The residual-income inversion is the general primary method — it works for
+    # any name and does not understate for low-payout firms the way the Gordon
+    # inversion does (Tata Steel / Reliance).  Gordon is used only for genuine,
+    # meaningful dividend payers (yield above the configured threshold, with a
+    # sane positive payout).
+    payer_threshold = config.market.dividend_payer_yield_threshold
+    is_dividend_payer = (
+        div_yield is not None
+        and div_yield >= payer_threshold
+        and 0.0 < payout < 1.0
+    )
+    if is_dividend_payer and g_imp is not None:
         implied_ke, implied_method = g_imp, "gordon"
     elif r_imp is not None:
         implied_ke, implied_method = r_imp, "residual_income"
+    elif g_imp is not None:           # last resort if RIM inputs missing
+        implied_ke, implied_method = g_imp, "gordon"
+    else:
+        implied_ke, implied_method = None, None
     # Reject implausible inversions (e.g. P/B≈1 with ROE≈g) rather than emit noise.
     if implied_ke is not None and not (0.02 < implied_ke < 0.40):
         warnings.append(
@@ -425,6 +440,8 @@ def compute_cost_of_capital(
         implied_ke=implied_ke,
         implied_method=implied_method,
         implied_gap=implied_gap,
+        gordon_implied_ke=g_imp,
+        rim_implied_ke=r_imp,
     )
 
     # ── Cost of debt: interest-based + synthetic ──────────────────────────

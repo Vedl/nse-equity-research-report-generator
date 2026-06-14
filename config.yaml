@@ -3,6 +3,7 @@ market:
   equity_risk_premium: 0.07    # Damodaran India ERP, January 2026 estimate; env INDIA_ERP overrides
   tax_rate: 0.25               # Corporate tax rate (base rate post-2019 cut)
   fallback_usd_inr: 95.0       # Used only when all live USDINR fetches fail
+  dividend_payer_yield_threshold: 0.02   # Min yield to use Gordon (else RIM) for implied Ke
 
 dcf:
   projection_horizon: 5        # Stage 1: years of explicit FCFF projection at g1

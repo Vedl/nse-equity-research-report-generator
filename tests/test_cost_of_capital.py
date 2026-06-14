@@ -220,18 +220,37 @@ def test_no_regression_no_peers_preserves_engine_beta(cfg):
     assert coc.beta.beta_used_source == "fallback"
 
 
-def test_implied_ke_wired_with_gap(cfg):
-    profile = _profile(1.0e12, dividend_yield=0.015, price_to_book=4.0,
-                       return_on_equity=0.30)
+def test_low_yield_uses_rim_primary(cfg):
+    """Low-payout name (yield < threshold): RIM is the primary implied estimate."""
+    profile = _profile(1.0e12, dividend_yield=0.005, price_to_book=2.0,
+                       return_on_equity=0.15)
     income = _df({"interest_expense": [0.0, 0.0], "operating_income": [2.0e11, 2.0e11]})
     balance = _df({"total_debt": [0.0, 0.0]})
     coc = compute_cost_of_capital(profile, income, balance, cfg, fallback_beta=1.0)
-    assert coc.cost_of_equity.implied_ke is not None
-    assert coc.cost_of_equity.implied_method in {"gordon", "residual_income"}
-    # gap = implied − CAPM
-    assert coc.cost_of_equity.implied_gap == pytest.approx(
-        coc.cost_of_equity.implied_ke - coc.cost_of_equity.capm_ke
-    )
+    ke = coc.cost_of_equity
+    assert ke.implied_method == "residual_income"
+    # g caps at terminal 0.05 → RIM = (0.15 + (2-1)·0.05)/2 = 0.10
+    assert ke.rim_implied_ke == pytest.approx(0.10)
+    assert ke.implied_ke == pytest.approx(ke.rim_implied_ke)
+    # both estimates exposed regardless of which is primary
+    assert ke.gordon_implied_ke is not None
+    assert ke.implied_gap == pytest.approx(ke.implied_ke - ke.capm_ke)
+
+
+def test_dividend_payer_uses_gordon_primary(cfg):
+    """Genuine dividend payer (yield ≥ threshold, sane payout): Gordon primary."""
+    profile = _profile(1.0e12, dividend_yield=0.04, price_to_book=3.0,
+                       return_on_equity=0.20)
+    income = _df({"interest_expense": [0.0, 0.0], "operating_income": [2.0e11, 2.0e11]})
+    balance = _df({"total_debt": [0.0, 0.0]})
+    coc = compute_cost_of_capital(profile, income, balance, cfg, fallback_beta=1.0)
+    ke = coc.cost_of_equity
+    assert ke.implied_method == "gordon"
+    # payout = 0.04·3/0.20 = 0.6 → g = min(0.05, 0.20·0.4) = 0.05
+    # Gordon = 0.04·1.05 + 0.05 = 0.092
+    assert ke.gordon_implied_ke == pytest.approx(0.092)
+    assert ke.implied_ke == pytest.approx(ke.gordon_implied_ke)
+    assert ke.rim_implied_ke is not None   # still exposed
 
 
 def test_no_raise_on_empty_inputs(cfg):
