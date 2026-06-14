@@ -21,6 +21,11 @@ from equity_research.analysis.conviction import (
     blend_values,
     confidence_score,
 )
+from equity_research.analysis.earnings_quality import (
+    EarningsQualityResult,
+    assess_earnings_quality,
+    sloan_accruals,
+)
 from equity_research.analysis.governance import GovernanceResult, governance_scorecard
 from equity_research.analysis.quality import (
     AccrualsResult,
@@ -87,7 +92,46 @@ class ResearchBundle:
     caq: CAQResult
     ccc: CCCResult
     governance: GovernanceResult
+    earnings_quality: EarningsQualityResult
     value_driver: ValueDriverResult | None
+
+
+def _sector_quality_samples(
+    provider: DataProvider,
+    ticker: str,
+    *,
+    cap: int = 6,
+) -> tuple[list[float], list[float]]:
+    """Best-effort accrual-ratio and F-score samples across NSE-sector peers.
+
+    Used only to position the company within its sector (percentile context for
+    the earnings-quality overlay).  Each peer fetch is isolated and skipped on
+    failure; the provider's disk cache keeps this cheap after warmup.  Capped to
+    bound per-request latency — a thin sample simply yields ``None`` percentiles.
+    """
+    accrual_samples: list[float] = []
+    fscore_samples: list[float] = []
+    try:
+        peers = provider.get_peers(ticker) or []
+    except Exception as exc:  # noqa: BLE001
+        logger.info("Sector quality samples: peer lookup failed (%s)", exc)
+        return accrual_samples, fscore_samples
+
+    for pt in peers[:cap]:
+        try:
+            pf = provider.get_financials(pt)
+            inc = pf.get("income", pd.DataFrame())
+            bal = pf.get("balance_sheet", pd.DataFrame())
+            cf = pf.get("cash_flow", pd.DataFrame())
+            acc = sloan_accruals(inc, bal, cf)
+            if acc.headline_ratio is not None:
+                accrual_samples.append(acc.headline_ratio)
+            pio = piotroski_f_score(inc, bal, cf)
+            if pio.max_available >= 5:
+                fscore_samples.append(float(pio.score))
+        except Exception as exc:  # noqa: BLE001
+            logger.info("Sector quality sample for %s skipped (%s)", pt, exc)
+    return accrual_samples, fscore_samples
 
 
 def _clean_data_years(income: pd.DataFrame) -> int:
@@ -204,6 +248,24 @@ def run_research_pipeline(
         lambda: governance_scorecard({}),
     )
 
+    # Earnings-quality / financial-reliability overlay (risk overlay only — NOT
+    # fed into the discount rate). Sector samples are best-effort context.
+    acc_samples, f_samples = _safe(
+        "sector_quality_samples",
+        lambda: _sector_quality_samples(provider, ticker),
+        lambda: ([], []),
+    )
+    earnings_quality = _safe(
+        "earnings_quality",
+        lambda: assess_earnings_quality(
+            income, balance, cashflow,
+            sector=profile.get("sector"),
+            accrual_peer_samples=acc_samples,
+            fscore_peer_samples=f_samples,
+        ),
+        lambda: assess_earnings_quality(_empty, _empty, _empty),
+    )
+
     wacc = _extract_wacc(val, config)
     roics = _safe(
         "roic_series",
@@ -313,5 +375,6 @@ def run_research_pipeline(
         caq=caq,
         ccc=ccc,
         governance=governance,
+        earnings_quality=earnings_quality,
         value_driver=value_driver,
     )
