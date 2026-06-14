@@ -7,8 +7,18 @@ it is deliberately NOT fed into the discount rate.
 Four pieces, combined into one verdict with per-component scores and a one-line
 plain-English reason each:
 
-1. Sloan (1996) accruals — NOA-based balance-sheet and cash-flow accrual ratios.
-   Higher accruals  ⇒  earnings are less cash-backed and less persistent.
+1. Sloan (1996) accruals — two complementary measures, higher ⇒ earnings are
+   less cash-backed and less persistent:
+     * PRIMARY: the Hribar-Collins (2002) operating accrual, (NI − CFO) scaled
+       by average total assets.  Drawn straight from the statement of cash
+       flows, it sidesteps the well-known balance-sheet articulation errors
+       (M&A, FX, reclassifications) and — crucially — never mistakes treasury
+       deployment (purchases of marketable securities, which sit in the
+       *investing* section) for operating accruals.
+     * SECONDARY / corroborating: the balance-sheet ΔNOA ratio, where NOA
+       strips cash **and** short-term investments from operating assets
+       (Richardson-Sloan-Soliman-Tuna 2005).  The two broadly agree in sign for
+       clean names but need not match exactly.
 2. Beneish (1999) M-score — 8-variable manipulation screen (reused from
    :mod:`quality`).  M > -1.78 flags a potential manipulator.
 3. Piotroski (2000) F-score — 9-point fundamental-strength score (reused).
@@ -18,15 +28,20 @@ plain-English reason each:
 Every sub-metric degrades to a clean ``None`` when an input line item is
 missing.  Nothing here raises on bad/sparse data and nothing is fabricated.
 
-Definitions (Sloan 1996; Penman, *Financial Statement Analysis*):
+Definitions (Sloan 1996; Hribar & Collins 2002; RSST 2005):
 
     Net Operating Assets (NOA)
-        = (Total Assets − Cash & ST investments)
+        = (Total Assets − Cash − Short-term investments)
           − (Total Liabilities − Total Debt[short+long])
         = Operating Assets − Operating Liabilities
 
-    Balance-sheet accrual ratio = (NOA_t − NOA_{t-1}) / avg(NOA_t, NOA_{t-1})
-    Cash-flow accrual ratio     = (NetIncome − CFO − CFI) / avg(NOA_t, NOA_{t-1})
+    Operating accrual ratio (PRIMARY)   = (NetIncome − CFO) / avg(Total Assets)
+    Balance-sheet accrual ratio (2ndary) = (NOA_t − NOA_{t-1}) / avg(NOA_t, NOA_{t-1})
+
+The PRIMARY ratio deliberately omits the investing section: capex and purchases
+of marketable securities are financing/treasury choices, not operating accruals.
+Including them (the old ``NI − CFO − CFI`` form) flagged cash-rich, asset-light
+firms — TCS and the wider Indian IT sector — red despite CFO ≥ NI every year.
 """
 
 from __future__ import annotations
@@ -52,8 +67,10 @@ logger = logging.getLogger(__name__)
 # Flag thresholds (single source of truth, all tunable here)
 # ---------------------------------------------------------------------------
 
-# Sloan accrual ratio — signed, higher = lower quality (Sloan 1996 anomaly).
-_ACCRUAL_RED = 0.10        # > 10% of NOA accrued → high-accrual red flag
+# Accrual ratio — signed, higher = lower quality (Sloan 1996 anomaly). Applied
+# to the PRIMARY Hribar-Collins (NI − CFO)/avg-assets ratio; total accruals above
+# ~10% of assets are the extreme income-increasing decile in the literature.
+_ACCRUAL_RED = 0.10        # > 10% of assets accrued → high-accrual red flag
 _ACCRUAL_AMBER = 0.05      # 5–10% → watch
 
 # Beneish M-score (Beneish 1999); -1.78 is the published manipulation threshold.
@@ -94,37 +111,70 @@ def _yr(series: pd.Series, offset: int = 0) -> float | None:
 
 @dataclass
 class SloanAccruals:
-    """Sloan (1996) NOA-based accrual ratios; higher ⇒ lower earnings quality."""
+    """Accrual ratios; higher ⇒ lower earnings quality.
+
+    ``cf_accrual_ratio`` is the PRIMARY measure (Hribar-Collins operating
+    accrual, NI − CFO over average total assets) and drives ``flag``;
+    ``bs_accrual_ratio`` (ΔNOA over average NOA) is kept as a secondary,
+    corroborating measure and only drives the flag when the primary is absent.
+    """
 
     noa_latest: float | None
     noa_prior: float | None
     avg_noa: float | None
-    bs_accrual_ratio: float | None     # (NOA_t − NOA_{t-1}) / avg(NOA)
-    cf_accrual_ratio: float | None     # (NI − CFO − CFI) / avg(NOA)
-    headline_ratio: float | None       # the ratio used for the flag (BS, else CF)
+    avg_total_assets: float | None     # H-C scaling base for the primary ratio
+    bs_accrual_ratio: float | None     # SECONDARY: (NOA_t − NOA_{t-1}) / avg(NOA)
+    cf_accrual_ratio: float | None     # PRIMARY:  (NI − CFO) / avg(Total Assets)
+    headline_ratio: float | None       # the ratio used for the flag (CF, else BS)
     flag: str                          # green / amber / red / na
     reason: str
     warnings: list[str] = field(default_factory=list)
 
 
-def _net_operating_assets(balance: pd.DataFrame, offset: int) -> float | None:
-    """NOA = (TA − Cash&STI) − (TL − TotalDebt) for the (latest − offset) year.
+def _cash_and_sti(balance: pd.DataFrame, offset: int) -> tuple[float, bool]:
+    """Cash + short-term investments to strip from operating assets.
 
-    ``cash_and_equivalents`` already folds in short-term investments in the
-    normalized schema (yfinance "Cash, Cash Equivalents & Short Term
-    Investments"), so it is the correct "Cash & ST investments" leg.
+    Per RSST (2005), operating assets exclude cash **and** short-term
+    investments — both are financial, not operating.  ``cash_and_equivalents``
+    is kept deliberately narrow (FCFF/net-debt depend on it), so the treasury
+    leg is sourced separately:
+
+      1. the broad reported "Cash, Cash Equivalents & Short-Term Investments"
+         line when present (already cash + STI), else
+      2. narrow cash + the standalone short-term-investments line, else
+      3. narrow cash alone (STI treated as 0).
+
+    Returns ``(value, sti_missing)`` where ``sti_missing`` is True only in case
+    3 — i.e. no STI information was available and it was defaulted to 0.
+    """
+    narrow = _yr(_col(balance, "cash_and_equivalents"), offset)
+    broad = _yr(_col(balance, "cash_and_short_term_investments"), offset)
+    sti = _yr(_col(balance, "short_term_investments"), offset)
+    narrow = narrow if _is_num(narrow) else 0.0
+    # Prefer the broad treasury line, but only if it is at least the narrow cash
+    # (guards against a stale/partial broad figure understating the leg).
+    if _is_num(broad) and broad >= narrow:
+        return broad, False
+    if _is_num(sti):
+        return narrow + sti, False
+    return narrow, True
+
+
+def _net_operating_assets(balance: pd.DataFrame, offset: int) -> float | None:
+    """NOA = (TA − Cash − STI) − (TL − TotalDebt) for the (latest − offset) year.
+
+    Strips cash AND short-term investments (financial assets) from operating
+    assets — see :func:`_cash_and_sti`.  Returns ``None`` when TA or TL is
+    missing (both are mandatory for a meaningful NOA).
     """
     ta = _yr(_col(balance, "total_assets"), offset)
-    cash = _yr(_col(balance, "cash_and_equivalents"), offset)
     tl = _yr(_col(balance, "total_liabilities"), offset)
     debt = _yr(_col(balance, "total_debt"), offset)
     if not (_is_num(ta) and _is_num(tl)):
         return None
-    # Cash and debt legs default to 0 only when the firm genuinely reports none;
-    # but TA and TL are mandatory for a meaningful NOA.
-    cash = cash if _is_num(cash) else 0.0
     debt = debt if _is_num(debt) else 0.0
-    operating_assets = ta - cash
+    cash_sti, _ = _cash_and_sti(balance, offset)
+    operating_assets = ta - cash_sti
     operating_liabilities = tl - debt
     return operating_assets - operating_liabilities
 
@@ -144,13 +194,17 @@ def sloan_accruals(
     balance: pd.DataFrame,
     cashflow: pd.DataFrame,
 ) -> SloanAccruals:
-    """Compute NOA-based balance-sheet and cash-flow accrual ratios.
+    """Compute the operating-accrual (primary) and ΔNOA (secondary) ratios.
 
-    Uses the latest fiscal year plus the prior year for the NOA delta.  Returns
-    clean ``None`` sub-metrics (never raises) when inputs are missing.
+    Primary: Hribar-Collins (2002) operating accrual, (NI − CFO) / avg total
+    assets — drawn from the cash-flow statement so it never counts treasury
+    deployment or capex as accruals.  Secondary: the balance-sheet ΔNOA ratio,
+    with NOA stripping cash and short-term investments.  Returns clean ``None``
+    sub-metrics (never raises) when inputs are missing.
     """
     warnings: list[str] = []
 
+    # ── SECONDARY: balance-sheet ΔNOA over average NOA ─────────────────────
     noa_t = _net_operating_assets(balance, 0)
     noa_p = _net_operating_assets(balance, 1)
 
@@ -163,44 +217,60 @@ def sloan_accruals(
 
     # A non-positive average NOA makes the scaled ratio uninterpretable
     # (sign flips, division blows up) — degrade rather than emit a garbage ratio.
-    scalable = _is_num(avg_noa) and avg_noa > 0
-    if not scalable:
-        warnings.append("NOA base non-positive or unavailable — accrual ratios undefined")
+    noa_scalable = _is_num(avg_noa) and avg_noa > 0
 
     bs_ratio: float | None = None
-    if _is_num(noa_t) and _is_num(noa_p) and scalable:
+    if _is_num(noa_t) and _is_num(noa_p) and noa_scalable:
         bs_ratio = (noa_t - noa_p) / avg_noa  # type: ignore[operator]
+
+    # Warn once if short-term investments could not be sourced (defaulted to 0).
+    if _is_num(noa_t) and _cash_and_sti(balance, 0)[1]:
+        warnings.append(
+            "Short-term investments line absent — NOA treats ST investments as 0"
+        )
+
+    # ── PRIMARY: Hribar-Collins operating accrual (NI − CFO) / avg total assets ─
+    ta_t = _yr(_col(balance, "total_assets"), 0)
+    ta_p = _yr(_col(balance, "total_assets"), 1)
+    avg_ta: float | None = None
+    if _is_num(ta_t) and _is_num(ta_p):
+        avg_ta = (ta_t + ta_p) / 2.0
+    elif _is_num(ta_t):
+        avg_ta = ta_t
+    ta_scalable = _is_num(avg_ta) and avg_ta > 0
 
     cf_ratio: float | None = None
     ni = _yr(_col(income, "net_income"))
     cfo = _yr(_col(cashflow, "operating_cash_flow"))
-    cfi = _yr(_col(cashflow, "investing_cash_flow"))
-    if all(_is_num(x) for x in (ni, cfo, cfi)) and scalable:
-        cf_ratio = (ni - cfo - cfi) / avg_noa  # type: ignore[operator]
-    elif not all(_is_num(x) for x in (ni, cfo, cfi)):
-        warnings.append("Cash-flow accrual ratio: NI, CFO or CFI missing")
+    if _is_num(ni) and _is_num(cfo) and ta_scalable:
+        cf_ratio = (ni - cfo) / avg_ta  # type: ignore[operator]
+    elif not (_is_num(ni) and _is_num(cfo)):
+        warnings.append("Operating-accrual ratio (NI − CFO): net income or CFO missing")
+    elif not ta_scalable:
+        warnings.append("Operating-accrual ratio: total-assets base unavailable")
 
-    # The balance-sheet ratio is Sloan's preferred construct; fall back to the
-    # cash-flow ratio when the NOA delta is unavailable.
-    headline = bs_ratio if bs_ratio is not None else cf_ratio
+    # The Hribar-Collins operating accrual is the primary, treasury-immune flag;
+    # fall back to the balance-sheet ΔNOA ratio only when CFO/NI are unavailable.
+    headline = cf_ratio if cf_ratio is not None else bs_ratio
     flag = _accrual_flag(headline)
 
     if flag == _NA:
-        reason = "Accruals: insufficient balance-sheet/cash-flow data"
+        reason = "Accruals: insufficient cash-flow/balance-sheet data"
     elif flag == _RED:
         reason = (
-            f"High accruals ({headline:+.1%} of NOA) — earnings poorly cash-backed, "
-            "lower persistence (Sloan)"
+            f"High accruals ({headline:+.1%} of assets) — income runs ahead of "
+            "operating cash, lower persistence (Sloan/Hribar-Collins)"
         )
     elif flag == _AMBER:
-        reason = f"Moderate accruals ({headline:+.1%} of NOA) — watch earnings backing"
+        reason = f"Moderate accruals ({headline:+.1%} of assets) — watch earnings backing"
     else:
-        reason = f"Low accruals ({headline:+.1%} of NOA) — earnings well cash-backed"
+        reason = f"Low accruals ({headline:+.1%} of assets) — earnings well cash-backed"
 
     return SloanAccruals(
         noa_latest=noa_t,
         noa_prior=noa_p,
         avg_noa=avg_noa,
+        avg_total_assets=avg_ta,
         bs_accrual_ratio=bs_ratio,
         cf_accrual_ratio=cf_ratio,
         headline_ratio=headline,
