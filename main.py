@@ -262,7 +262,9 @@ def _build_research(ticker_ns: str) -> dict:
     )
 
     # ── Full research pipeline: beta → valuation → quality → conviction ──
-    bundle = run_research_pipeline(profile, financials, _provider, _config)
+    bundle = run_research_pipeline(
+        profile, financials, _provider, _config, with_narrative=True
+    )
     val_result = bundle.valuation
 
     # ── Price change (supplementary fetch) ────────────────────────────────
@@ -779,9 +781,35 @@ def _build_research(ticker_ns: str) -> dict:
         "warnings": vs.warnings,
     }
 
+    rec = bundle.recommendation
+    recommendation_out = {
+        "action":          rec.action,
+        "conviction":      rec.conviction,
+        "flagged":         rec.flagged,
+        "upside_pct":      _clean(rec.upside_pct),
+        "required_margin_of_safety": _clean(rec.required_mos),
+        "quality_verdict": rec.quality_verdict,
+        "reason":          rec.reason,
+        "overlay_notes":   rec.overlay_notes,
+    }
+    nar = bundle.narrative
+    narrative_out = None
+    if nar is not None:
+        narrative_out = {
+            "thesis":                     nar.thesis,
+            "key_drivers":                nar.key_drivers,
+            "risks":                      nar.risks,
+            "catalysts":                  nar.catalysts,
+            "what_would_change_the_view": nar.what_would_change_the_view,
+            "limitations_and_confidence": nar.limitations_and_confidence,
+            "model":                      nar.model,
+        }
+
     return {
         "company":    company,
         "conviction": conviction_out,
+        "recommendation": recommendation_out,
+        "narrative":  narrative_out,
         "quality":    quality_out,
         "cost_of_capital": cost_of_capital_out,
         "valuation_explainability": valuation_explainability_out,

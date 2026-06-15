@@ -32,6 +32,12 @@ from equity_research.analysis.earnings_quality import (
     sloan_accruals,
 )
 from equity_research.analysis.governance import GovernanceResult, governance_scorecard
+from equity_research.analysis.narrative import (
+    Narrative,
+    build_narrative_payload,
+    generate_narrative,
+)
+from equity_research.analysis.recommendation import Recommendation, decide_recommendation
 from equity_research.analysis.quality import (
     AccrualsResult,
     AltmanResult,
@@ -111,6 +117,8 @@ class ResearchBundle:
     governance: GovernanceResult
     earnings_quality: EarningsQualityResult
     value_driver: ValueDriverResult | None
+    recommendation: Recommendation
+    narrative: Narrative | None = None
 
 
 def _sector_quality_samples(
@@ -240,8 +248,15 @@ def run_research_pipeline(
     financials: dict[str, pd.DataFrame],
     provider: DataProvider,
     config: AppConfig,
+    *,
+    with_narrative: bool = False,
 ) -> ResearchBundle:
-    """Run the complete analysis: beta → valuation → quality → conviction."""
+    """Run the complete analysis: beta → valuation → quality → conviction.
+
+    ``with_narrative`` gates the LLM narrative step (an external Anthropic API
+    call): the API layer enables it; offline/tests leave it off so no network
+    call is made and the deterministic recommendation is still produced.
+    """
     income = financials.get("income", pd.DataFrame())
     balance = financials.get("balance_sheet", pd.DataFrame())
     cashflow = financials.get("cash_flow", pd.DataFrame())
@@ -480,6 +495,60 @@ def run_research_pipeline(
         models_agree=agree,
     )
 
+    # --- Guardrail-aware recommendation (deterministic; always computed) ---
+    recommendation = _safe(
+        "recommendation",
+        lambda: decide_recommendation(
+            upside_pct=upside,
+            quality_verdict=earnings_quality.verdict,
+            guardrail_fired=bool(valuation_explainability.diagnostics),
+            has_critical=valuation_explainability.has_critical,
+        ),
+        lambda: decide_recommendation(
+            upside_pct=None, quality_verdict="Unrated", guardrail_fired=False
+        ),
+    )
+
+    # --- LLM narrative ("the why") — external API call, gated + best-effort ---
+    narrative: Narrative | None = None
+    if with_narrative:
+        narrative = _safe(
+            "narrative",
+            lambda: generate_narrative(build_narrative_payload(
+                company={
+                    "name": profile.get("long_name"),
+                    "ticker": profile.get("ticker"),
+                    "sector": profile.get("sector"),
+                },
+                recommendation=recommendation,
+                quality_verdict=earnings_quality.verdict,
+                quality_components=[
+                    {"name": c.name, "flag": c.flag, "reason": c.reason}
+                    for c in earnings_quality.components
+                ],
+                valuation_rationale=valuation_explainability.rationale.headline,
+                bridge=[
+                    {"label": s.label, "value": s.value}
+                    for s in (valuation_explainability.bridge.steps
+                              if valuation_explainability.bridge else [])
+                ],
+                wacc_build_up={
+                    "wacc": cost_of_capital.wacc,
+                    "cost_of_equity": cost_of_capital.cost_of_equity.capm_ke,
+                    "beta_used": cost_of_capital.beta.beta_used,
+                    "risk_free_rate": cost_of_capital.risk_free_rate,
+                    "equity_risk_premium": cost_of_capital.equity_risk_premium,
+                },
+                guardrail_flags=[
+                    {"code": d.code, "severity": d.severity, "message": d.message}
+                    for d in valuation_explainability.diagnostics
+                ],
+                intrinsic_value=val.intrinsic_value,
+                current_price=profile.get("current_price"),
+            )),
+            lambda: None,
+        )
+
     return ResearchBundle(
         valuation=val,
         conviction=conviction,
@@ -498,4 +567,6 @@ def run_research_pipeline(
         governance=governance,
         earnings_quality=earnings_quality,
         value_driver=value_driver,
+        recommendation=recommendation,
+        narrative=narrative,
     )
