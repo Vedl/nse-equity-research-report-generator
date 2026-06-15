@@ -434,13 +434,10 @@ def compute_cost_of_capital(
     # below the discount rate and the long-run cap so the inversions stay finite.
     roe = profile.get("return_on_equity")
     roe = float(roe) if _is_num(roe) else None
+    # dividend_yield is normalized to a fraction once, in the provider — no local
+    # rescaling here (that would double-divide).
     div_yield = profile.get("dividend_yield")
     div_yield = float(div_yield) if _is_num(div_yield) else None
-    # yfinance is inconsistent: dividend_yield sometimes arrives as a percent
-    # number (e.g. 0.46 for 0.46%). No equity yields 15%+, so treat anything
-    # above that as percent-as-number and rescale.
-    if div_yield is not None and div_yield > 0.15:
-        div_yield = div_yield / 100.0
     pb = profile.get("price_to_book")
     pb = float(pb) if _is_num(pb) else None
     g_cap = config.dcf.terminal_growth_rate
