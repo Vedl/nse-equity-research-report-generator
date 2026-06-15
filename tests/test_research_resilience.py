@@ -124,6 +124,13 @@ def test_reliance_returns_valid_report_object(
     bear = next(s for s in vs.scenarios if s.name == "bear")
     base = next(s for s in vs.scenarios if s.name == "base")
     assert bear.intrinsic_value < base.intrinsic_value < bull.intrinsic_value
+    # Recommendation is always produced; the narrative is gated off here so no
+    # external API call is made (with_narrative defaults False).
+    rec = bundle.recommendation
+    assert rec is not None
+    assert rec.action in {"BUY", "HOLD", "SELL"}
+    assert rec.conviction in {"high", "medium", "low"}
+    assert bundle.narrative is None
 
 
 def test_pipeline_resilient_to_non_numeric_insider_holding(
