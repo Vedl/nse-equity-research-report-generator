@@ -55,6 +55,17 @@ class RouterConfig:
 
 
 @dataclass
+class GuardrailsConfig:
+    """Plausibility-guardrail thresholds for the valuation explainability layer."""
+
+    value_to_price_low: float = 0.5      # intrinsic/price below this → flag
+    value_to_price_high: float = 2.0     # intrinsic/price above this → flag
+    terminal_value_max_share: float = 0.75   # PV(TV)/EV above this → flag
+    implied_exit_multiple_low: float = 4.0   # implied terminal EV/EBITDA floor
+    implied_exit_multiple_high: float = 25.0  # implied terminal EV/EBITDA ceiling
+
+
+@dataclass
 class ChartsConfig:
     """Chart rendering options."""
 
@@ -80,6 +91,7 @@ class AppConfig:
     router: RouterConfig
     peers: PeersConfig
     report: ReportConfig
+    guardrails: GuardrailsConfig = field(default_factory=GuardrailsConfig)
     conglomerates: dict[str, Any] = field(default_factory=dict)  # raw config for SOTP
 
 
@@ -148,6 +160,14 @@ def load_config(path: Path | str = _DEFAULT_CONFIG_PATH) -> AppConfig:
             output_dir=str(r["output_dir"]),
             charts=charts,
         )
+        g = raw.get("guardrails", {})
+        guardrails = GuardrailsConfig(
+            value_to_price_low=float(g.get("value_to_price_low", 0.5)),
+            value_to_price_high=float(g.get("value_to_price_high", 2.0)),
+            terminal_value_max_share=float(g.get("terminal_value_max_share", 0.75)),
+            implied_exit_multiple_low=float(g.get("implied_exit_multiple_low", 4.0)),
+            implied_exit_multiple_high=float(g.get("implied_exit_multiple_high", 25.0)),
+        )
     except KeyError as exc:
         raise ValueError(f"Missing required config key: {exc}") from exc
 
@@ -155,5 +175,5 @@ def load_config(path: Path | str = _DEFAULT_CONFIG_PATH) -> AppConfig:
 
     return AppConfig(
         market=market, dcf=dcf, router=router, peers=peers,
-        report=report, conglomerates=conglomerates_raw,
+        report=report, guardrails=guardrails, conglomerates=conglomerates_raw,
     )

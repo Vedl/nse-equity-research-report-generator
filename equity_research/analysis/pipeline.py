@@ -53,6 +53,10 @@ from equity_research.analysis.quality import (
 )
 from equity_research.analysis.ratios import _col
 from equity_research.analysis.residual_income import run_residual_income
+from equity_research.analysis.valuation_explain import (
+    ValuationExplainability,
+    explain_valuation,
+)
 from equity_research.analysis.valuation import ValuationResult, run_valuation
 from equity_research.analysis.value_driver import ValueDriverResult, run_value_driver
 from equity_research.config import AppConfig
@@ -89,6 +93,7 @@ class ResearchBundle:
     conviction: ConvictionResult
     beta: BetaResult
     cost_of_capital: CostOfCapital
+    valuation_explainability: ValuationExplainability
     piotroski: PiotroskiResult
     beneish: BeneishResult
     altman: AltmanResult
@@ -373,6 +378,17 @@ def run_research_pipeline(
         except Exception as exc:  # noqa: BLE001
             logger.warning("Value-driver cross-check failed: %s", exc)
 
+    # --- Valuation explainability: rationale + bridge + plausibility guardrails ---
+    base_ebitda = _col(income, "ebitda").dropna()
+    base_ebitda_val = float(base_ebitda.iloc[-1]) if not base_ebitda.empty else None
+    valuation_explainability = _safe(
+        "valuation_explainability",
+        lambda: explain_valuation(
+            profile, val, cost_of_capital, config, base_ebitda=base_ebitda_val
+        ),
+        lambda: explain_valuation(profile, val, cost_of_capital, config),
+    )
+
     # --- Blending + conviction + rating ---
     primary_value = val.intrinsic_value
     blended = blend_values(primary_value, secondary_value)
@@ -451,6 +467,7 @@ def run_research_pipeline(
         conviction=conviction,
         beta=beta_res,
         cost_of_capital=cost_of_capital,
+        valuation_explainability=valuation_explainability,
         piotroski=piotroski,
         beneish=beneish,
         altman=altman,
