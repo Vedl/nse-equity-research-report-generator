@@ -374,6 +374,37 @@ def _normalize_financial_df(
     return result
 
 
+def _normalize_dividend_yield(
+    dy: float | None,
+    trailing_yield: float | None,
+    dps: float | None,
+    price: float | None,
+) -> float | None:
+    """Return dividend yield as a fraction (e.g. 0.0082 for 0.82%).
+
+    yfinance's ``dividendYield`` is percentage-points in current versions but was
+    a fraction in older ones, and the magnitude alone is ambiguous for sub-1%
+    payers (0.82 could be 0.82% or 82%).  Resolution order:
+
+      1. ``trailingAnnualDividendYield`` — reliably already a fraction;
+      2. disambiguate ``dividendYield`` against the unambiguous DPS / price;
+      3. fall back to assuming percentage-points (current yfinance behaviour).
+    """
+    if isinstance(trailing_yield, (int, float)) and 0.0 < float(trailing_yield) < 0.5:
+        return float(trailing_yield)
+    if not isinstance(dy, (int, float)) or dy <= 0:
+        return float(dy) if isinstance(dy, (int, float)) else None
+    dy = float(dy)
+    if (isinstance(dps, (int, float)) and dps > 0
+            and isinstance(price, (int, float)) and price > 0):
+        true_y = dps / price
+        return dy if abs(dy - true_y) <= abs(dy / 100.0 - true_y) else dy / 100.0
+    # No ground truth: current yfinance returns percentage points. Only rescale
+    # values too large to be a plausible fraction, leaving an already-fractional
+    # legacy value (≤ 0.2) untouched.
+    return dy / 100.0 if dy > 0.2 else dy
+
+
 class YFinanceProvider(DataProvider):
     """DataProvider backed by yfinance for NSE (Nifty 500) equities."""
 
@@ -415,11 +446,16 @@ class YFinanceProvider(DataProvider):
         # "INR" for RELIANCE.NS).  Downstream code uses this to convert to INR.
         profile["financial_currency"] = raw_info.get("financialCurrency", "INR")
 
-        # Fix dividend yield decimal handling
-        # Sometimes yfinance returns 5.07 for 5.07%, but downstream code expects 0.0507
-        dy = profile.get("dividend_yield")
-        if dy is not None and dy > 1.0:
-            profile["dividend_yield"] = dy / 100.0
+        # Normalize dividend yield to a fraction (0.0082 for 0.82%).  yfinance's
+        # `dividendYield` is percentage-points in current versions but the old
+        # `> 1.0` heuristic missed sub-1% payers (0.82 was read as 82%, exploding
+        # the bank DDM blend).  See _normalize_dividend_yield.
+        profile["dividend_yield"] = _normalize_dividend_yield(
+            profile.get("dividend_yield"),
+            raw_info.get("trailingAnnualDividendYield"),
+            raw_info.get("dividendRate") or raw_info.get("trailingAnnualDividendRate"),
+            profile.get("current_price"),
+        )
 
         # --- Shares outstanding fallback chain ---
         shares = profile.get("shares_outstanding")
