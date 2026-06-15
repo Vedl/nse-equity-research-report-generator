@@ -320,7 +320,9 @@ def run_financial_valuation(
     dps0: float | None = None
     g_long = min(config.dcf.terminal_growth_rate, ke - 0.01)
     h_half_life = 5.0   # 10-year linear fade
-    if div_yield and price and price > 0:
+    # Guard: a dividend yield above ~25% is implausible (a mis-scaled feed); skip
+    # the DDM blend rather than let an exploded DPS0 inflate the intrinsic value.
+    if div_yield and price and price > 0 and float(div_yield) <= 0.25:
         dps0 = float(div_yield) * float(price)
         if dps0 > 0 and ke > g_long:
             try:
