@@ -79,6 +79,7 @@ class FinancialValuationResult:
     ddm_g_long: float | None = None     # terminal growth gL
     ddm_h: float | None = None          # half-life of the fade (years)
     pb_model_value: float | None = None # pure Justified P/B value (pre-blend)
+    ddm_weight: float | None = None     # payout-derived weight on the DDM component
 
 
 def h_model_ddm(
@@ -116,6 +117,33 @@ def justified_pb(roe: float, growth: float, cost_of_equity: float) -> float:
     pb = (roe - growth) / (cost_of_equity - growth)
     # Clamp to plausible range [0.1, 10.0] to avoid extreme outliers
     return max(0.1, min(10.0, pb))
+
+
+# Cap on the dividend-DDM blend weight: even a 100%-payout name keeps some weight
+# on the retention-aware ROE-spread model (a pure DDM is fragile to the dividend
+# assumption).
+_DDM_MAX_WEIGHT = 0.80
+
+
+def payout_weighted_blend(
+    pb_value: float,
+    ddm_value: float | None,
+    payout_ratio: float,
+    max_ddm_weight: float = _DDM_MAX_WEIGHT,
+) -> tuple[float, float]:
+    """Blend the ROE-spread (justified-P/B) and dividend-DDM values by payout.
+
+    A dividend-only DDM is valid only to the extent earnings are actually
+    distributed, so its weight tracks the payout ratio: a high-payout bank is
+    valued mostly off the DDM (where it holds), while a high-retention bank is
+    valued off the retention-aware ROE-spread model (justified P/B already prices
+    reinvested earnings via g = retention × ROE).  Continuous in payout — no
+    arbitrary cutoff.  Returns ``(intrinsic, ddm_weight)``.
+    """
+    if ddm_value is None:
+        return pb_value, 0.0
+    w = max(0.0, min(payout_ratio, max_ddm_weight))
+    return (1.0 - w) * pb_value + w * ddm_value, w
 
 
 def _compute_ke(profile: dict, config: AppConfig) -> float:
@@ -333,14 +361,13 @@ def run_financial_valuation(
                 logger.warning("H-Model DDM failed: %s", exc)
                 ddm_value = None
 
+    intrinsic, ddm_weight = payout_weighted_blend(pb_value, ddm_value, payout_ratio)
     if ddm_value is not None:
-        intrinsic = 0.5 * pb_value + 0.5 * ddm_value
         logger.info(
-            "Bank intrinsic: 50/50 blend of Justified P/B (%.2f) and H-Model DDM (%.2f)",
-            pb_value, ddm_value,
+            "Bank intrinsic: payout-weighted blend (DDM w=%.2f) of Justified P/B "
+            "(%.2f) and H-Model DDM (%.2f) → %.2f",
+            ddm_weight, pb_value, ddm_value, intrinsic,
         )
-    else:
-        intrinsic = pb_value
     equity_value = intrinsic * shares
 
     # --- Sensitivity table ---
@@ -379,4 +406,5 @@ def run_financial_valuation(
         ddm_g_long=g_long,
         ddm_h=h_half_life,
         pb_model_value=pb_value,
+        ddm_weight=ddm_weight,
     )
