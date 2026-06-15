@@ -19,6 +19,9 @@ class MarketConfig:
     equity_risk_premium: float
     tax_rate: float
     fallback_usd_inr: float = 95.0  # hard fallback when all live USDINR fetches fail
+    # Min dividend yield to treat a name as a genuine dividend payer for the
+    # Gordon implied-Ke inversion; below this the RIM inversion is used instead.
+    dividend_payer_yield_threshold: float = 0.02
 
 
 @dataclass
@@ -103,6 +106,9 @@ def load_config(path: Path | str = _DEFAULT_CONFIG_PATH) -> AppConfig:
             equity_risk_premium=float(os.getenv("INDIA_ERP", mkt["equity_risk_premium"])),
             tax_rate=float(mkt["tax_rate"]),
             fallback_usd_inr=float(mkt.get("fallback_usd_inr", 84.0)),
+            dividend_payer_yield_threshold=float(
+                mkt.get("dividend_payer_yield_threshold", 0.02)
+            ),
         )
 
         d = raw["dcf"]
