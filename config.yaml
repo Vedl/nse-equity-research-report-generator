@@ -4,6 +4,8 @@ market:
   tax_rate: 0.25               # Corporate tax rate (base rate post-2019 cut)
   fallback_usd_inr: 95.0       # Used only when all live USDINR fetches fail
   dividend_payer_yield_threshold: 0.02   # Min yield to use Gordon (else RIM) for implied Ke
+  financial_ke_low: 0.10       # Banks bypass unlever/relever; Ke flagged/clamped to this band
+  financial_ke_high: 0.15
 
 dcf:
   projection_horizon: 5        # Stage 1: years of explicit FCFF projection at g1

@@ -53,6 +53,7 @@ from equity_research.analysis.quality import (
 )
 from equity_research.analysis.ratios import _col
 from equity_research.analysis.residual_income import run_residual_income
+from equity_research.analysis.router import _is_financial_sector
 from equity_research.analysis.valuation_explain import (
     ValuationExplainability,
     explain_valuation,
@@ -266,6 +267,7 @@ def run_research_pipeline(
         lambda: _cost_of_capital_peer_samples(provider, ticker),
         list,
     )
+    coc_is_financial = _is_financial_sector(profile, config.router.financial_keywords)
     cost_of_capital = _safe(
         "cost_of_capital",
         lambda: compute_cost_of_capital(
@@ -275,9 +277,11 @@ def run_research_pipeline(
             regression_beta_source=raw_src,
             fallback_beta=beta_res.beta,
             peer_beta_de=coc_peers,
+            is_financial=coc_is_financial,
         ),
         lambda: compute_cost_of_capital(
-            profile, income, balance, config, fallback_beta=beta_res.beta
+            profile, income, balance, config, fallback_beta=beta_res.beta,
+            is_financial=coc_is_financial,
         ),
     )
     profile["beta"] = cost_of_capital.beta.beta_used

@@ -207,6 +207,55 @@ def test_no_peers_uses_blume_regression(cfg):
     assert coc.beta.beta_used_source == "blume_regression"
 
 
+def test_financial_skips_unlever_and_uses_blume(cfg):
+    """Banks must NOT unlever/relever; canonical = Blume levered regression, Ke in band."""
+    profile = _profile(1.0e13)  # large-cap bank
+    income = _df({"interest_expense": [1.0e10, 1.0e10], "operating_income": [3.0e11, 3.0e11]})
+    balance = _df({"total_debt": [6.0e12, 6.0e12]})  # huge bank "debt" (deposits/borrowings)
+    coc = compute_cost_of_capital(
+        profile, income, balance, cfg,
+        regression_beta=1.0, fallback_beta=1.0,
+        peer_beta_de=[(1.5, 0.6), (1.5, 0.6)],   # would relever high on the corporate path
+        is_financial=True,
+    )
+    # No bottom-up: the unlever/relever path is bypassed entirely.
+    assert coc.beta.bottom_up_beta is None
+    assert coc.beta.beta_used_source == "blume_regression_financial"
+    assert coc.beta.beta_used == pytest.approx(blume_adjust(1.0))   # = 1.0
+    # Ke lands inside the financial sanity band.
+    assert cfg.market.financial_ke_low <= coc.cost_of_equity.capm_ke <= cfg.market.financial_ke_high
+
+
+def test_financial_ke_band_clamp(cfg):
+    """A too-high bank beta is clamped to the band edge and flagged."""
+    profile = _profile(1.0e13)
+    income = _df({"operating_income": [3.0e11, 3.0e11]})
+    balance = _df({"total_debt": [6.0e12, 6.0e12]})
+    coc = compute_cost_of_capital(
+        profile, income, balance, cfg,
+        regression_beta=1.6, fallback_beta=1.0, peer_beta_de=None, is_financial=True,
+    )
+    assert coc.beta.beta_used_source == "financial_band_clamp"
+    assert coc.cost_of_equity.capm_ke == pytest.approx(cfg.market.financial_ke_high)
+    assert any("clamped" in w for w in coc.warnings)
+
+
+def test_financial_peer_median_fallback(cfg):
+    """Out-of-band regression beta but in-band peer median → use peer-median bank beta."""
+    profile = _profile(1.0e13)
+    income = _df({"operating_income": [3.0e11, 3.0e11]})
+    balance = _df({"total_debt": [6.0e12, 6.0e12]})
+    coc = compute_cost_of_capital(
+        profile, income, balance, cfg,
+        regression_beta=1.7, fallback_beta=1.0,
+        peer_beta_de=[(0.9, 0.5), (0.95, 0.5)],   # median 0.925 → Ke in band
+        is_financial=True,
+    )
+    assert coc.beta.beta_used_source == "peer_median_bank"
+    assert coc.beta.beta_used == pytest.approx(0.925)
+    assert cfg.market.financial_ke_low <= coc.cost_of_equity.capm_ke <= cfg.market.financial_ke_high
+
+
 def test_no_regression_no_peers_preserves_engine_beta(cfg):
     """Data-poor name (no regression, no peers) → engine's fallback beta kept."""
     profile = _profile(1.0e12)
