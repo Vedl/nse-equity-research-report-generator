@@ -697,11 +697,48 @@ def _build_research(ticker_ns: str) -> dict:
         "warnings": coc.warnings,
     }
 
+    vx = bundle.valuation_explainability
+    vx_bridge = None
+    if vx.bridge is not None:
+        vx_bridge = {
+            "model":        vx.bridge.model,
+            "wacc":         _clean(vx.bridge.wacc),
+            "shares":       _clean(vx.bridge.shares),
+            "value_per_share":          _clean(vx.bridge.value_per_share),
+            "reported_value_per_share": _clean(vx.bridge.reported_value_per_share),
+            "reconciles":   vx.bridge.reconciles,
+            "reconciliation_error": _clean(vx.bridge.reconciliation_error),
+            "steps": [
+                {"label": s.label, "value": _clean(s.value), "kind": s.kind}
+                for s in vx.bridge.steps
+            ],
+        }
+    valuation_explainability_out = {
+        "rationale": {
+            "sector":       vx.rationale.sector,
+            "industry":     vx.rationale.industry,
+            "model":        vx.rationale.model,
+            "model_label":  vx.rationale.model_label,
+            "confidence":   vx.rationale.confidence,
+            "reason":       vx.rationale.reason,
+            "headline":     vx.rationale.headline,
+        },
+        "bridge": vx_bridge,
+        "diagnostics": [
+            {"code": d.code, "severity": d.severity, "message": d.message,
+             "value": _clean(d.value), "threshold": _clean(d.threshold)}
+            for d in vx.diagnostics
+        ],
+        "has_critical": vx.has_critical,
+        "warnings": vx.warnings,
+    }
+
     return {
         "company":    company,
         "conviction": conviction_out,
         "quality":    quality_out,
         "cost_of_capital": cost_of_capital_out,
+        "valuation_explainability": valuation_explainability_out,
         "price":      price_section,
         "financials": {
             "income_statement": income_records,

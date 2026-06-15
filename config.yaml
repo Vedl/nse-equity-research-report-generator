@@ -12,6 +12,13 @@ dcf:
   revenue_growth_source: historical_cagr   # "historical_cagr" | "manual"
   # revenue_growth_override: 0.12   # uncomment to override with a fixed annual rate
 
+guardrails:                          # valuation plausibility flags (diagnostics, not hard errors)
+  value_to_price_low: 0.5            # flag if intrinsic/price below this
+  value_to_price_high: 2.0          # flag if intrinsic/price above this
+  terminal_value_max_share: 0.75    # flag if PV(terminal) / EV exceeds this
+  implied_exit_multiple_low: 4.0    # flag if implied terminal EV/EBITDA below this
+  implied_exit_multiple_high: 25.0  # flag if implied terminal EV/EBITDA above this
+
 router:
   capex_intensity_threshold: 0.25    # capex/revenue ratio above which company is "capex-heavy"
   leverage_threshold: 4.0            # net_debt/EBITDA above which company is "highly leveraged"

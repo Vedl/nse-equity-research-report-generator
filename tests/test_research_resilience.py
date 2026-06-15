@@ -107,6 +107,13 @@ def test_reliance_returns_valid_report_object(
     # No peers offline → bottom-up unavailable → engine's fallback beta retained.
     assert coc.beta.bottom_up_beta is None
     assert coc.beta.beta_used == pytest.approx(bundle.beta.beta)
+    # Valuation explainability is wired: SOTP rationale + a reconciling bridge.
+    vx = bundle.valuation_explainability
+    assert vx is not None
+    assert vx.rationale.model == "sotp"
+    assert "sotp" in vx.rationale.model_label.lower() or vx.rationale.headline
+    assert vx.bridge is not None and vx.bridge.model == "sotp"
+    assert vx.bridge.reconciles is True
 
 
 def test_pipeline_resilient_to_non_numeric_insider_holding(
