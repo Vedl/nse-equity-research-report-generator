@@ -253,9 +253,9 @@ def run_research_pipeline(
 ) -> ResearchBundle:
     """Run the complete analysis: beta → valuation → quality → conviction.
 
-    ``with_narrative`` gates the LLM narrative step (an external Anthropic API
-    call): the API layer enables it; offline/tests leave it off so no network
-    call is made and the deterministic recommendation is still produced.
+    ``with_narrative`` gates the deterministic narrative step (a pure function of
+    the structured payload — no network, no key, no cost): the API layer enables
+    it; most tests leave it off since the recommendation is produced regardless.
     """
     income = financials.get("income", pd.DataFrame())
     balance = financials.get("balance_sheet", pd.DataFrame())
@@ -509,9 +509,31 @@ def run_research_pipeline(
         ),
     )
 
-    # --- LLM narrative ("the why") — external API call, gated + best-effort ---
+    # --- Deterministic narrative ("the why") — pure function of the payload ---
+    # No external API, no key, no cost: composed entirely from the structured
+    # numbers above (router rationale, bridge, tornado, sensitivity grid, WACC
+    # build-up, earnings quality, guardrails, recommendation).
     narrative: Narrative | None = None
     if with_narrative:
+        vs = valuation_scenarios
+        sensitivity_payload = None
+        if vs is not None and vs.sensitivity is not None:
+            sg = vs.sensitivity
+            sensitivity_payload = {
+                "row_driver": sg.row_driver,
+                "col_driver": sg.col_driver,
+                "row_values": list(sg.row_values),
+                "col_values": list(sg.col_values),
+                "values": [list(r) for r in sg.values],
+                "base_row": sg.base_row,
+                "base_col": sg.base_col,
+            }
+        tornado_payload = [
+            {"driver": t.driver, "low_input": t.low_input, "high_input": t.high_input,
+             "low_value": t.low_value, "high_value": t.high_value,
+             "base_value": t.base_value, "swing": t.swing}
+            for t in (vs.tornado if vs is not None else [])
+        ]
         narrative = _safe(
             "narrative",
             lambda: generate_narrative(build_narrative_payload(
@@ -545,6 +567,12 @@ def run_research_pipeline(
                 ],
                 intrinsic_value=val.intrinsic_value,
                 current_price=profile.get("current_price"),
+                model=valuation_explainability.rationale.model,
+                model_label=valuation_explainability.rationale.model_label,
+                tornado=tornado_payload,
+                sensitivity=sensitivity_payload,
+                discount_driver=(vs.discount_driver if vs is not None else None),
+                scenarios_note=(vs.note if vs is not None else None),
             )),
             lambda: None,
         )

@@ -41,7 +41,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
-from equity_research.analysis.pipeline import ResearchBundle, run_research_pipeline
+from equity_research.analysis.pipeline import run_research_pipeline
 from equity_research.analysis.ratios import compute_ratios
 from equity_research.config import load_config
 from equity_research.data import cache as file_cache
@@ -796,13 +796,15 @@ def _build_research(ticker_ns: str) -> dict:
     narrative_out = None
     if nar is not None:
         narrative_out = {
-            "thesis":                     nar.thesis,
-            "key_drivers":                nar.key_drivers,
+            "one_line_view":              nar.one_line_view,
+            "approach":                   nar.approach,
+            "what_drives_value":          nar.what_drives_value,
+            "what_it_hinges_on":          nar.what_it_hinges_on,
+            "earnings_quality":           nar.earnings_quality,
             "risks":                      nar.risks,
-            "catalysts":                  nar.catalysts,
             "what_would_change_the_view": nar.what_would_change_the_view,
-            "limitations_and_confidence": nar.limitations_and_confidence,
-            "model":                      nar.model,
+            "thesis":                     nar.thesis,
+            "generator":                  nar.generator,
         }
 
     return {
