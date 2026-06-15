@@ -139,39 +139,59 @@ class Narrative:
 # ===========================================================================
 
 
-def _direction_word(upside: object) -> str | None:
-    if not _finite(upside):
-        return None
-    if upside > 0.005:
-        return "upside"
-    if upside < -0.005:
-        return "downside"
-    return "broadly in line"
+def _cap(s: str) -> str:
+    return s[:1].upper() + s[1:] if s else s
+
+
+def _fair_value_anchor(rec: dict, val: dict) -> str:
+    """A single coherent number the call is measured from.
+
+    The headline anchors on the *blended target* — the exact value ``upside_pct``
+    is computed from — with the primary intrinsic and the peer median shown as
+    its components, so target / components / price / % all reconcile through one
+    stated figure rather than placing a primary intrinsic beside a blend-derived
+    percentage that does not tie out.
+    """
+    target = val.get("target")
+    price = val.get("current_price")
+    primary = val.get("intrinsic_value_per_share")
+    secondary = val.get("secondary_value")
+    primary_label = val.get("model_label") or "primary model"
+    secondary_label = val.get("secondary_label") or "peer median"
+    upside = rec.get("upside_pct")
+
+    comps: list[str] = []
+    if _finite(primary):
+        comps.append(f"{primary_label} {_fmt_money(primary)}")
+    if _finite(secondary):
+        comps.append(f"{secondary_label} {_fmt_money(secondary)}")
+    comp_str = f" ({'; '.join(comps)})" if comps else ""
+
+    t_money = _fmt_money(target)
+    px = _fmt_money(price)
+    label = "blended fair value" if len(comps) > 1 else "fair value"
+
+    if not t_money:
+        return "no usable fair-value estimate"
+    if px and _finite(upside):
+        if abs(upside) < 0.005:
+            return f"{label} {t_money}{comp_str}, broadly in line with the {px} price"
+        rel = "above" if upside > 0 else "below"
+        # The % is measured from the SAME target shown: upside == (target − price)/price.
+        return f"{label} {t_money}{comp_str}, {_fmt_pct0(abs(upside))} {rel} the {px} price"
+    return f"{label} {t_money}{comp_str}"
 
 
 def _one_line_view(company: dict, rec: dict, val: dict) -> str:
     ticker = company.get("ticker") or company.get("name") or "The company"
-    label = val.get("model_label") or "the valuation model"
-    iv = _fmt_money(val.get("intrinsic_value_per_share"))
-    px = _fmt_money(val.get("current_price"))
     conv = rec.get("conviction") or "low"
-    mag = _fmt_pct0(abs(rec["upside_pct"])) if _finite(rec.get("upside_pct")) else None
-    direction = _direction_word(rec.get("upside_pct"))
-
-    vs_price = f" against a market price of {px}" if px else ""
-    iv_clause = f"{label} marks an intrinsic value of {iv}{vs_price}" if iv else (
-        f"{label} could not mark a usable intrinsic value"
-    )
-    call_clause = (
-        f"; the blended call implies {mag} {direction}"
-        if (mag and direction) else ""
-    )
+    anchor = _fair_value_anchor(rec, val)
 
     if rec.get("flagged"):
         return (
             f"{ticker} — directional call withheld; valuation flagged. "
-            f"{iv_clause}{call_clause}, but a plausibility guardrail fired, so this "
-            f"is treated as indicative at {conv} confidence, not a call."
+            f"{_cap(anchor)}, but a plausibility guardrail fired, so this is treated "
+            f"as indicative at {conv} confidence, not a call."
         )
 
     action = rec.get("action") or "HOLD"
@@ -181,9 +201,7 @@ def _one_line_view(company: dict, rec: dict, val: dict) -> str:
         f" The call clears the {mos} margin of safety required at {verdict} earnings quality."
         if (action in ("BUY", "SELL") and mos) else ""
     )
-    return (
-        f"{ticker} — {action} ({conv} conviction). {iv_clause}{call_clause}.{mos_clause}"
-    )
+    return f"{ticker} — {action} ({conv} conviction). {_cap(anchor)}.{mos_clause}"
 
 
 def _approach(val: dict, coc: dict, discount_driver: str | None) -> str:
@@ -436,6 +454,9 @@ def build_narrative_payload(
     guardrail_flags: list[dict],
     intrinsic_value: float | None,
     current_price: float | None,
+    target: float | None = None,
+    secondary_value: float | None = None,
+    secondary_label: str | None = None,
     model: str | None = None,
     model_label: str | None = None,
     tornado: list[dict] | None = None,
@@ -471,6 +492,9 @@ def build_narrative_payload(
             "model_rationale": valuation_rationale,
             "intrinsic_value_per_share": intrinsic_value,
             "current_price": current_price,
+            "target": target,
+            "secondary_value": secondary_value,
+            "secondary_label": secondary_label,
             "bridge": bridge,
         },
         "wacc_build_up": wacc_build_up,
