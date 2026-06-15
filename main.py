@@ -733,12 +733,54 @@ def _build_research(ticker_ns: str) -> dict:
         "warnings": vx.warnings,
     }
 
+    vs = bundle.valuation_scenarios
+    vs_grid = None
+    if vs.sensitivity is not None:
+        g = vs.sensitivity
+        vs_grid = {
+            "row_driver": g.row_driver, "col_driver": g.col_driver,
+            "row_values": [_clean(v) for v in g.row_values],
+            "col_values": [_clean(v) for v in g.col_values],
+            "values": [[_clean(v) for v in row] for row in g.values],
+            "base_row": _clean(g.base_row), "base_col": _clean(g.base_col),
+        }
+    valuation_scenarios_out = {
+        "model": vs.model,
+        "discount_driver": vs.discount_driver,
+        "sensitivity": vs_grid,
+        "tornado": [
+            {"driver": t.driver, "low_input": _clean(t.low_input),
+             "high_input": _clean(t.high_input), "low_value": _clean(t.low_value),
+             "high_value": _clean(t.high_value), "base_value": _clean(t.base_value),
+             "swing": _clean(t.swing)}
+            for t in vs.tornado
+        ],
+        "scenarios": [
+            {"name": s.name, "assumptions": {k: _clean(v) for k, v in s.assumptions.items()},
+             "intrinsic_value": _clean(s.intrinsic_value),
+             "target_12m": _clean(s.target_12m), "target_y_year": _clean(s.target_y_year),
+             "horizon_years": s.horizon_years,
+             "bridge_to_target": [
+                 {"label": b.label, "value": _clean(b.value), "kind": b.kind}
+                 for b in s.bridge_to_target
+             ],
+             "diagnostics": [
+                 {"code": d.code, "severity": d.severity, "message": d.message}
+                 for d in s.diagnostics
+             ]}
+            for s in vs.scenarios
+        ],
+        "note": vs.note,
+        "warnings": vs.warnings,
+    }
+
     return {
         "company":    company,
         "conviction": conviction_out,
         "quality":    quality_out,
         "cost_of_capital": cost_of_capital_out,
         "valuation_explainability": valuation_explainability_out,
+        "valuation_scenarios": valuation_scenarios_out,
         "price":      price_section,
         "financials": {
             "income_statement": income_records,

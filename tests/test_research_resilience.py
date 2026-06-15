@@ -114,6 +114,16 @@ def test_reliance_returns_valid_report_object(
     assert "sotp" in vx.rationale.model_label.lower() or vx.rationale.headline
     assert vx.bridge is not None and vx.bridge.model == "sotp"
     assert vx.bridge.reconciles is True
+    # SOTP scenarios degrade gracefully: no discount×g grid, but a note + 3 scenarios.
+    vs = bundle.valuation_scenarios
+    assert vs is not None and vs.model == "sotp"
+    assert vs.sensitivity is None
+    assert vs.note is not None
+    assert {s.name for s in vs.scenarios} == {"base", "bull", "bear"}
+    bull = next(s for s in vs.scenarios if s.name == "bull")
+    bear = next(s for s in vs.scenarios if s.name == "bear")
+    base = next(s for s in vs.scenarios if s.name == "base")
+    assert bear.intrinsic_value < base.intrinsic_value < bull.intrinsic_value
 
 
 def test_pipeline_resilient_to_non_numeric_insider_holding(
