@@ -22,6 +22,12 @@ class MarketConfig:
     # Min dividend yield to treat a name as a genuine dividend payer for the
     # Gordon implied-Ke inversion; below this the RIM inversion is used instead.
     dividend_payer_yield_threshold: float = 0.02
+    # Sanity band for a financial's cost of equity. Banks bypass the corporate
+    # unlever/relever path (deposits are raw material, not leverage); if the
+    # levered-regression Ke still lands outside this band it is flagged and
+    # falls back (peer-median bank beta, then clamp to the nearest edge).
+    financial_ke_low: float = 0.10
+    financial_ke_high: float = 0.15
 
 
 @dataclass
@@ -121,6 +127,8 @@ def load_config(path: Path | str = _DEFAULT_CONFIG_PATH) -> AppConfig:
             dividend_payer_yield_threshold=float(
                 mkt.get("dividend_payer_yield_threshold", 0.02)
             ),
+            financial_ke_low=float(mkt.get("financial_ke_low", 0.10)),
+            financial_ke_high=float(mkt.get("financial_ke_high", 0.15)),
         )
 
         d = raw["dcf"]

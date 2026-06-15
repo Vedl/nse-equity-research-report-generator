@@ -72,6 +72,16 @@ def _avg_tail(series: pd.Series, n: int = 3) -> float | None:
     return float(valid.tail(n).mean())
 
 
+def _median(values: list[float]) -> float | None:
+    finite = sorted(v for v in values if _is_num(v))
+    if not finite:
+        return None
+    mid = len(finite) // 2
+    if len(finite) % 2:
+        return finite[mid]
+    return (finite[mid - 1] + finite[mid]) / 2.0
+
+
 # ---------------------------------------------------------------------------
 # Pure beta math (unit-tested directly)
 # ---------------------------------------------------------------------------
@@ -298,6 +308,7 @@ def compute_cost_of_capital(
     regression_beta_source: str = "",
     fallback_beta: float | None = None,
     peer_beta_de: list[tuple[float, float]] | None = None,
+    is_financial: bool = False,
 ) -> CostOfCapital:
     """Assemble the full WACC decomposition.
 
@@ -306,6 +317,12 @@ def compute_cost_of_capital(
     sector-median estimate) used when no better estimate is available so the
     discount rate never silently changes for data-poor names.  ``peer_beta_de``
     are (levered beta, D/E) pairs for the bottom-up estimate.
+
+    ``is_financial`` routes banks/NBFCs away from the corporate unlever/relever
+    path: a bank's D/E (deposits + borrowings) is raw material, not financing
+    leverage, so Hamada unlevering produces a garbage beta.  Financials use the
+    Blume-adjusted levered regression beta directly, with a Ke sanity band and a
+    peer-median-bank-beta fallback.
     """
     warnings: list[str] = []
     rf = config.market.risk_free_rate
@@ -323,41 +340,77 @@ def compute_cost_of_capital(
     total_debt = max(0.0, total_debt)
 
     target_de = (total_debt / market_cap) if (market_cap and market_cap > 0) else None
+    alpha_size = size_premium(market_cap)
 
-    # ── Beta decomposition ────────────────────────────────────────────────
-    # Damodaran's bottom-up beta is the intended primary, BUT only when it agrees
-    # with the target's own regression: a peer set that skews to smaller / more
-    # cyclical names can push it far from the firm's actual return behaviour. So
-    # bottom-up is canonical only within _BETA_DIVERGENCE of the Blume-adjusted
-    # regression beta; otherwise the (reliable, market-shrunk) Blume regression
-    # wins and the divergence is flagged.
     raw = regression_beta if _is_num(regression_beta) else None
     blume = blume_adjust(raw) if raw is not None else None
-    bu, avg_u, unlevered = bottom_up_beta(peer_beta_de, target_de, tax)
 
-    if bu is not None and blume is not None:
-        if abs(bu - blume) <= _BETA_DIVERGENCE:
-            beta_used, beta_src = bu, "bottom_up"
+    if is_financial:
+        # ── Financial path: NO unlever/relever. ───────────────────────────
+        # A bank's D/E is operating raw material, not leverage; Hamada produces
+        # garbage. Use the Blume-adjusted levered regression beta directly, with
+        # a Ke sanity band and a peer-median levered-bank-beta fallback.
+        bu, avg_u, unlevered = None, None, []
+        peer_median = _median([bl for bl, _de in (peer_beta_de or [])])
+        if blume is not None:
+            beta_used, beta_src = blume, "blume_regression_financial"
+        elif peer_median is not None:
+            beta_used, beta_src = peer_median, "peer_median_bank"
+        elif _is_num(fallback_beta):
+            beta_used, beta_src = float(fallback_beta), "fallback"
         else:
-            beta_used, beta_src = blume, "blume_regression"
-            warnings.append(
-                f"Bottom-up beta {bu:.2f} diverges from regression {blume:.2f} "
-                "(peer-set composition) — used Blume-adjusted regression"
-            )
-    elif bu is not None:
-        beta_used, beta_src = bu, "bottom_up"
-    elif blume is not None:
-        beta_used, beta_src = blume, "blume_regression"
-    elif _is_num(fallback_beta):
-        # Data-poor name (no regression, no peers): keep the engine's existing
-        # beta so the discount rate doesn't silently change.
-        beta_used, beta_src = float(fallback_beta), "fallback"
-    else:
-        beta_used, beta_src = 1.0, "fallback"
-        warnings.append("No beta source available — defaulted to 1.0")
+            beta_used, beta_src = 1.0, "fallback"
+            warnings.append("No beta source available — defaulted to 1.0")
 
-    if bu is None and peer_beta_de:
-        warnings.append("Bottom-up beta: fewer than two usable peers")
+        lo, hi = config.market.financial_ke_low, config.market.financial_ke_high
+        ke_try = rf + beta_used * erp + alpha_size
+        if not (lo <= ke_try <= hi):
+            handled = False
+            # 1) fall back to peer-median bank beta if that lands in band
+            if peer_median is not None and beta_src != "peer_median_bank":
+                if lo <= rf + peer_median * erp + alpha_size <= hi:
+                    warnings.append(
+                        f"Financial Ke {ke_try:.1%} outside [{lo:.0%},{hi:.0%}] — "
+                        "used peer-median bank beta"
+                    )
+                    beta_used, beta_src, handled = peer_median, "peer_median_bank", True
+            # 2) otherwise clamp Ke to the nearest band edge
+            if not handled:
+                edge = lo if ke_try < lo else hi
+                beta_used = max(_BETA_CLAMP[0], (edge - rf - alpha_size) / erp)
+                beta_src = "financial_band_clamp"
+                warnings.append(
+                    f"Financial Ke {ke_try:.1%} outside [{lo:.0%},{hi:.0%}] — "
+                    f"clamped to {edge:.0%}"
+                )
+    else:
+        # ── Corporate path: bottom-up beta, guarded against noisy peer sets. ─
+        # Damodaran's bottom-up is canonical only within _BETA_DIVERGENCE of the
+        # Blume regression; otherwise the reliable Blume regression wins (flagged).
+        bu, avg_u, unlevered = bottom_up_beta(peer_beta_de, target_de, tax)
+        if bu is not None and blume is not None:
+            if abs(bu - blume) <= _BETA_DIVERGENCE:
+                beta_used, beta_src = bu, "bottom_up"
+            else:
+                beta_used, beta_src = blume, "blume_regression"
+                warnings.append(
+                    f"Bottom-up beta {bu:.2f} diverges from regression {blume:.2f} "
+                    "(peer-set composition) — used Blume-adjusted regression"
+                )
+        elif bu is not None:
+            beta_used, beta_src = bu, "bottom_up"
+        elif blume is not None:
+            beta_used, beta_src = blume, "blume_regression"
+        elif _is_num(fallback_beta):
+            # Data-poor name (no regression, no peers): keep the engine's existing
+            # beta so the discount rate doesn't silently change.
+            beta_used, beta_src = float(fallback_beta), "fallback"
+        else:
+            beta_used, beta_src = 1.0, "fallback"
+            warnings.append("No beta source available — defaulted to 1.0")
+
+        if bu is None and peer_beta_de:
+            warnings.append("Bottom-up beta: fewer than two usable peers")
 
     beta_decomp = BetaDecomposition(
         raw_regression_beta=raw,
@@ -374,7 +427,6 @@ def compute_cost_of_capital(
     )
 
     # ── Cost of equity: CAPM + implied ────────────────────────────────────
-    alpha_size = size_premium(market_cap)
     capm_ke = rf + beta_used * erp + alpha_size
     capm_ke_bottom_up = (rf + bu * erp + alpha_size) if bu is not None else None
 
