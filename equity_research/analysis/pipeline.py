@@ -58,6 +58,10 @@ from equity_research.analysis.valuation_explain import (
     ValuationExplainability,
     explain_valuation,
 )
+from equity_research.analysis.valuation_scenarios import (
+    ValuationScenarios,
+    build_scenarios,
+)
 from equity_research.analysis.valuation import ValuationResult, run_valuation
 from equity_research.analysis.value_driver import ValueDriverResult, run_value_driver
 from equity_research.config import AppConfig
@@ -95,6 +99,7 @@ class ResearchBundle:
     beta: BetaResult
     cost_of_capital: CostOfCapital
     valuation_explainability: ValuationExplainability
+    valuation_scenarios: ValuationScenarios
     piotroski: PiotroskiResult
     beneish: BeneishResult
     altman: AltmanResult
@@ -393,6 +398,15 @@ def run_research_pipeline(
         lambda: explain_valuation(profile, val, cost_of_capital, config),
     )
 
+    # --- Sensitivity grid + tornado + base/bull/bear scenarios (model-aware) ---
+    valuation_scenarios = _safe(
+        "valuation_scenarios",
+        lambda: build_scenarios(val, profile, config),
+        lambda: ValuationScenarios(
+            val.model_used, "—", None, [], [], note="scenarios unavailable"
+        ),
+    )
+
     # --- Blending + conviction + rating ---
     primary_value = val.intrinsic_value
     blended = blend_values(primary_value, secondary_value)
@@ -472,6 +486,7 @@ def run_research_pipeline(
         beta=beta_res,
         cost_of_capital=cost_of_capital,
         valuation_explainability=valuation_explainability,
+        valuation_scenarios=valuation_scenarios,
         piotroski=piotroski,
         beneish=beneish,
         altman=altman,
