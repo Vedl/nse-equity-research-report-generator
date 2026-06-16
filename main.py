@@ -445,11 +445,9 @@ def _build_research(ticker_ns: str) -> dict:
         financial_out = {
             "justified_pb":          _clean(fin.justified_pb),
             "intrinsic_value":       _clean(fin.intrinsic_value_per_share),
-            # Blend components: ROE-spread (justified-P/B) value, dividend-DDM
-            # value, and the payout-derived weight on the DDM.
+            # Intrinsic IS the ROTE-based justified-P/B value (no dividend-only
+            # DDM blend; pb_model_value == intrinsic_value).
             "pb_model_value":        _clean(fin.pb_model_value),
-            "ddm_value_per_share":   _clean(fin.ddm_value_per_share),
-            "ddm_weight":            _clean(fin.ddm_weight),
             "book_value_per_share":  _clean(fin.book_value_per_share),
             "total_book_value_per_share": _clean(fin.total_book_value_per_share),
             "book_basis":            fin.book_basis,

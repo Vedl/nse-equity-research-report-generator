@@ -607,11 +607,8 @@ def _assumptions(bundle: ResearchBundle, config: AppConfig) -> list[dict]:
             {"label": "Justified P/B", "value": f"{fin.justified_pb:.2f}×",
              "note": "(ROE − g)/(Ke − g) — CFA L2 Equity, Reading 25"},
             {"label": "Sustainable growth", "value": _pct(fin.growth_rate, 1),
-             "note": "ROE × retention ratio"},
+             "note": "capped terminal assumption, kept safely below Ke"},
         ]
-        if fin.ddm_value_per_share:
-            rows.append({"label": "H-Model DDM value", "value": _rs(fin.ddm_value_per_share, 0),
-                         "note": f"D0 ₹{fin.ddm_dps0:.1f}, gS {_pct(fin.ddm_g_short, 1)} → gL {_pct(fin.ddm_g_long, 1)}, H={fin.ddm_h:.0f}"})
     rows.append({"label": "Rating bands", "value": "BUY ≥ +15% · HOLD −10%…+15% · SELL < −10%",
                  "note": "Standard sell-side convention on 12-month upside"})
     return rows
@@ -717,11 +714,10 @@ def generate_report(
         bm = fin.bank_metrics
         bank_rows = [
             {"label": "Justified P/B", "value": f"{fin.justified_pb:.2f}×"},
-            {"label": "ROE (trailing avg)", "value": _pct(fin.roe)},
+            {"label": "Return on tangible equity", "value": _pct(fin.roe)},
             {"label": "Cost of equity (Ke)", "value": _pct(fin.cost_of_equity)},
             {"label": "ROE − Ke spread", "value": _signed_pct(fin.roe_ke_spread)},
-            {"label": "Book value / share", "value": _rs(fin.book_value_per_share, 0)},
-            {"label": "H-Model DDM value", "value": _rs(fin.ddm_value_per_share, 0) if fin.ddm_value_per_share else NA},
+            {"label": "Tangible book / share", "value": _rs(fin.book_value_per_share, 0)},
             {"label": "Net interest margin (approx)", "value": _pct(bm.net_interest_margin) if bm.net_interest_margin else NA},
             {"label": "GNPA / PCR / CASA / CRAR", "value": "N/A (regulatory filings)"},
         ]
