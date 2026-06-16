@@ -15,19 +15,28 @@ _DEFAULT_CONFIG_PATH = Path(__file__).parent.parent / "config.yaml"
 class MarketConfig:
     """Macro-market assumptions."""
 
-    risk_free_rate: float
+    # Cost-of-equity risk-free build (internally consistent — country risk counted
+    # ONCE, in the ERP).  The India G-Sec yield embeds the sovereign default
+    # spread, so the default-free rupee risk-free = gsec_yield − default_spread is
+    # paired with the country-loaded Damodaran India ERP.  ``risk_free_rate`` is
+    # DERIVED (gsec_yield − sovereign_default_spread) and is the single rate that
+    # feeds every CAPM Ke (financial + FCFF/SOTP WACC).
+    gsec_yield: float                 # India 10Y G-Sec nominal yield (debt base)
+    sovereign_default_spread: float   # India sovereign default spread in the G-Sec
+    risk_free_rate: float             # DERIVED default-free rupee Rf for CAPM
     equity_risk_premium: float
     tax_rate: float
     fallback_usd_inr: float = 95.0  # hard fallback when all live USDINR fetches fail
     # Min dividend yield to treat a name as a genuine dividend payer for the
     # Gordon implied-Ke inversion; below this the RIM inversion is used instead.
     dividend_payer_yield_threshold: float = 0.02
-    # Sanity band for a financial's cost of equity. Banks bypass the corporate
-    # unlever/relever path (deposits are raw material, not leverage); if the
-    # levered-regression Ke still lands outside this band it is flagged and
-    # falls back (peer-median bank beta, then clamp to the nearest edge).
-    financial_ke_low: float = 0.10
-    financial_ke_high: float = 0.15
+    # Sanity band for a financial's levered-regression BETA (Rf/ERP-invariant —
+    # its real job is rejecting an implausible beta, not policing a Ke level that
+    # moves with the macro inputs).  Banks bypass the corporate unlever/relever
+    # path; if the beta lands outside this band it falls back (peer-median bank
+    # beta, then clamp to the nearest edge).
+    financial_beta_low: float = 0.6
+    financial_beta_high: float = 1.6
 
 
 @dataclass
@@ -119,16 +128,25 @@ def load_config(path: Path | str = _DEFAULT_CONFIG_PATH) -> AppConfig:
     try:
         mkt = raw["market"]
         # Env vars (Railway deployment contract) override config.yaml values.
+        # The default-free rupee risk-free is BUILT from the G-Sec yield minus the
+        # sovereign default spread (both env-overridable); RISK_FREE_RATE is no
+        # longer read directly — set GSEC_YIELD / SOVEREIGN_DEFAULT_SPREAD instead.
+        gsec = float(os.getenv("GSEC_YIELD", mkt.get("gsec_yield", 0.068)))
+        sov_spread = float(
+            os.getenv("SOVEREIGN_DEFAULT_SPREAD", mkt.get("sovereign_default_spread", 0.0216))
+        )
         market = MarketConfig(
-            risk_free_rate=float(os.getenv("RISK_FREE_RATE", mkt["risk_free_rate"])),
+            gsec_yield=gsec,
+            sovereign_default_spread=sov_spread,
+            risk_free_rate=gsec - sov_spread,   # construction (a): country risk in ERP only
             equity_risk_premium=float(os.getenv("INDIA_ERP", mkt["equity_risk_premium"])),
             tax_rate=float(mkt["tax_rate"]),
             fallback_usd_inr=float(mkt.get("fallback_usd_inr", 84.0)),
             dividend_payer_yield_threshold=float(
                 mkt.get("dividend_payer_yield_threshold", 0.02)
             ),
-            financial_ke_low=float(mkt.get("financial_ke_low", 0.10)),
-            financial_ke_high=float(mkt.get("financial_ke_high", 0.15)),
+            financial_beta_low=float(mkt.get("financial_beta_low", 0.6)),
+            financial_beta_high=float(mkt.get("financial_beta_high", 1.6)),
         )
 
         d = raw["dcf"]

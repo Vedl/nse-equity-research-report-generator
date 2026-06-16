@@ -325,7 +325,8 @@ def compute_cost_of_capital(
     peer-median-bank-beta fallback.
     """
     warnings: list[str] = []
-    rf = config.market.risk_free_rate
+    rf = config.market.risk_free_rate        # default-free rupee Rf for CAPM Ke
+    gsec = config.market.gsec_yield          # G-Sec yield = the debt base rate
     erp = config.market.equity_risk_premium
     tax = config.market.tax_rate
 
@@ -362,26 +363,28 @@ def compute_cost_of_capital(
             beta_used, beta_src = 1.0, "fallback"
             warnings.append("No beta source available — defaulted to 1.0")
 
-        lo, hi = config.market.financial_ke_low, config.market.financial_ke_high
-        ke_try = rf + beta_used * erp + alpha_size
-        if not (lo <= ke_try <= hi):
+        # β sanity band (Rf/ERP-invariant): reject an implausible levered-regression
+        # beta, not a Ke *level* (which moves with the macro inputs).  This is the
+        # band's real job and it no longer re-imposes the old inflated Ke.
+        lo_b, hi_b = config.market.financial_beta_low, config.market.financial_beta_high
+        if not (lo_b <= beta_used <= hi_b):
             handled = False
-            # 1) fall back to peer-median bank beta if that lands in band
-            if peer_median is not None and beta_src != "peer_median_bank":
-                if lo <= rf + peer_median * erp + alpha_size <= hi:
-                    warnings.append(
-                        f"Financial Ke {ke_try:.1%} outside [{lo:.0%},{hi:.0%}] — "
-                        "used peer-median bank beta"
-                    )
-                    beta_used, beta_src, handled = peer_median, "peer_median_bank", True
-            # 2) otherwise clamp Ke to the nearest band edge
-            if not handled:
-                edge = lo if ke_try < lo else hi
-                beta_used = max(_BETA_CLAMP[0], (edge - rf - alpha_size) / erp)
-                beta_src = "financial_band_clamp"
+            # 1) fall back to peer-median bank beta if it lands in the β band
+            if (peer_median is not None and beta_src != "peer_median_bank"
+                    and lo_b <= peer_median <= hi_b):
                 warnings.append(
-                    f"Financial Ke {ke_try:.1%} outside [{lo:.0%},{hi:.0%}] — "
-                    f"clamped to {edge:.0%}"
+                    f"Financial β {beta_used:.2f} outside [{lo_b:.1f},{hi_b:.1f}] — "
+                    "used peer-median bank β"
+                )
+                beta_used, beta_src, handled = peer_median, "peer_median_bank", True
+            # 2) otherwise clamp β to the nearest band edge
+            if not handled:
+                orig = beta_used
+                edge = lo_b if beta_used < lo_b else hi_b
+                beta_used, beta_src = edge, "financial_beta_clamp"
+                warnings.append(
+                    f"Financial β {orig:.2f} outside [{lo_b:.1f},{hi_b:.1f}] — "
+                    f"clamped to {edge:.1f}"
                 )
     else:
         # ── Corporate path: bottom-up beta, guarded against noisy peer sets. ─
@@ -503,7 +506,10 @@ def compute_cost_of_capital(
     ebit = _latest(_col(income, "operating_income"))
     coverage = (ebit / interest) if (_is_num(ebit) and interest and interest > 0) else None
     spread = synthetic_spread(coverage)
-    kd_synth = rf + spread
+    # Debt is priced off the actual rupee base rate (the G-Sec, which includes the
+    # sovereign component a borrower pays) plus the company spread — NOT the
+    # default-free equity Rf, which would put a corporate's Kd below the sovereign.
+    kd_synth = gsec + spread
 
     if kd_interest is not None:
         kd_pretax, kd_method = kd_interest, "interest_based"

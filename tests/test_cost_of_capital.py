@@ -135,9 +135,11 @@ def test_debt_free_wacc_collapses_to_ke(cfg):
     coc = compute_cost_of_capital(profile, income, balance, cfg, fallback_beta=1.0)
     assert coc.debt_weight == pytest.approx(0.0)
     assert coc.wacc == pytest.approx(coc.cost_of_equity.capm_ke)
-    # Ke = Rf + β·ERP + size premium = 0.068 + 1.0·0.07 + 0.005 = 0.143 — in band
-    assert 0.12 < coc.cost_of_equity.capm_ke < 0.16
-    assert coc.cost_of_equity.capm_ke == pytest.approx(0.068 + 0.07 + 0.005)
+    # Ke = default-free Rf + β·ERP + size premium = 0.0464 + 1.0·0.07 + 0.005 ≈ 0.121
+    assert 0.10 < coc.cost_of_equity.capm_ke < 0.14
+    assert coc.cost_of_equity.capm_ke == pytest.approx(
+        cfg.market.risk_free_rate + cfg.market.equity_risk_premium + 0.005
+    )
 
 
 def test_levered_wacc_below_ke(cfg):
@@ -222,21 +224,21 @@ def test_financial_skips_unlever_and_uses_blume(cfg):
     assert coc.beta.bottom_up_beta is None
     assert coc.beta.beta_used_source == "blume_regression_financial"
     assert coc.beta.beta_used == pytest.approx(blume_adjust(1.0))   # = 1.0
-    # Ke lands inside the financial sanity band.
-    assert cfg.market.financial_ke_low <= coc.cost_of_equity.capm_ke <= cfg.market.financial_ke_high
+    # The levered-regression β lands inside the β sanity band (Rf/ERP-invariant).
+    assert cfg.market.financial_beta_low <= coc.beta.beta_used <= cfg.market.financial_beta_high
 
 
-def test_financial_ke_band_clamp(cfg):
-    """A too-high bank beta is clamped to the band edge and flagged."""
+def test_financial_beta_band_clamp(cfg):
+    """A too-high bank beta is clamped to the β-band edge and flagged."""
     profile = _profile(1.0e13)
     income = _df({"operating_income": [3.0e11, 3.0e11]})
     balance = _df({"total_debt": [6.0e12, 6.0e12]})
     coc = compute_cost_of_capital(
         profile, income, balance, cfg,
-        regression_beta=1.6, fallback_beta=1.0, peer_beta_de=None, is_financial=True,
-    )
-    assert coc.beta.beta_used_source == "financial_band_clamp"
-    assert coc.cost_of_equity.capm_ke == pytest.approx(cfg.market.financial_ke_high)
+        regression_beta=2.5, fallback_beta=1.0, peer_beta_de=None, is_financial=True,
+    )  # blume(2.5)=2.0 > 1.6 → clamps to the band's high edge
+    assert coc.beta.beta_used_source == "financial_beta_clamp"
+    assert coc.beta.beta_used == pytest.approx(cfg.market.financial_beta_high)
     assert any("clamped" in w for w in coc.warnings)
 
 
@@ -247,13 +249,13 @@ def test_financial_peer_median_fallback(cfg):
     balance = _df({"total_debt": [6.0e12, 6.0e12]})
     coc = compute_cost_of_capital(
         profile, income, balance, cfg,
-        regression_beta=1.7, fallback_beta=1.0,
-        peer_beta_de=[(0.9, 0.5), (0.95, 0.5)],   # median 0.925 → Ke in band
+        regression_beta=2.0, fallback_beta=1.0,    # blume(2.0)=1.67 > 1.6 → out of β band
+        peer_beta_de=[(0.9, 0.5), (0.95, 0.5)],    # median 0.925 → in band
         is_financial=True,
     )
     assert coc.beta.beta_used_source == "peer_median_bank"
     assert coc.beta.beta_used == pytest.approx(0.925)
-    assert cfg.market.financial_ke_low <= coc.cost_of_equity.capm_ke <= cfg.market.financial_ke_high
+    assert cfg.market.financial_beta_low <= coc.beta.beta_used <= cfg.market.financial_beta_high
 
 
 def test_no_regression_no_peers_preserves_engine_beta(cfg):

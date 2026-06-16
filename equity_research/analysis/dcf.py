@@ -283,9 +283,11 @@ def compute_wacc(
     if latest_ie and total_debt > 0:
         kd_pretax = max(0.01, min(0.30, latest_ie / total_debt))
     else:
-        kd_pretax = config.market.risk_free_rate + 0.02
+        # Debt base is the G-Sec yield (a borrower's actual rupee base), not the
+        # default-free equity Rf — otherwise Kd would fall below the sovereign.
+        kd_pretax = config.market.gsec_yield + 0.02
         logger.warning(
-            "Cost of debt: no usable interest/debt data — using Rf + 2%% (%.3f)", kd_pretax
+            "Cost of debt: no usable interest/debt data — using G-Sec + 2%% (%.3f)", kd_pretax
         )
     kd_after = kd_pretax * (1.0 - config.market.tax_rate)
 

@@ -1,11 +1,15 @@
 market:
-  risk_free_rate: 0.068        # India 10Y G-Sec yield (as of May 2026); env RISK_FREE_RATE overrides
-  equity_risk_premium: 0.07    # Damodaran India ERP, January 2026 estimate; env INDIA_ERP overrides
+  # Cost-of-equity risk-free build (country risk counted ONCE, in the ERP).
+  gsec_yield: 0.068            # India 10Y G-Sec nominal yield (May 2026); env GSEC_YIELD
+  sovereign_default_spread: 0.0216  # India sovereign default spread embedded in the G-Sec
+                               # (Damodaran, Baa3); env SOVEREIGN_DEFAULT_SPREAD.
+                               # → default-free rupee risk-free = 0.068 − 0.0216 ≈ 0.0464
+  equity_risk_premium: 0.07    # Damodaran India TOTAL ERP (Jan 2026 = mature ERP + India CRP); env INDIA_ERP
   tax_rate: 0.25               # Corporate tax rate (base rate post-2019 cut)
   fallback_usd_inr: 95.0       # Used only when all live USDINR fetches fail
   dividend_payer_yield_threshold: 0.02   # Min yield to use Gordon (else RIM) for implied Ke
-  financial_ke_low: 0.10       # Banks bypass unlever/relever; Ke flagged/clamped to this band
-  financial_ke_high: 0.15
+  financial_beta_low: 0.6      # Bank levered-regression β sanity band (Rf/ERP-invariant)
+  financial_beta_high: 1.6
 
 dcf:
   projection_horizon: 5        # Stage 1: years of explicit FCFF projection at g1
