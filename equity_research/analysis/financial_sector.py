@@ -5,7 +5,9 @@ The correct model for banks, NBFCs, insurance, and financial services:
     Justified P/B = (ROE − g) / (Ke − g)
 
 Where:
-    ROE = trailing Return on Equity
+    ROE = Return on Tangible Equity (ROTE) — book is tangible common equity
+          (total equity − goodwill − intangibles), the correct bank base since
+          acquisition goodwill earns no return.
     g   = sustainable growth rate = ROE × retention ratio
     Ke  = cost of equity via CAPM (Rf + β × ERP)
 
@@ -49,9 +51,9 @@ class FinancialValuationResult:
     equity_value: float
 
     # Model inputs
-    book_value_per_share: float
+    book_value_per_share: float         # tangible book/share (the base used)
     cost_of_equity: float               # Ke from CAPM
-    roe: float                          # trailing ROE used
+    roe: float                          # ROE used in the multiple (ROTE)
     growth_rate: float                  # sustainable growth
     terminal_growth: float
     shares_outstanding: float
@@ -80,6 +82,10 @@ class FinancialValuationResult:
     ddm_h: float | None = None          # half-life of the fade (years)
     pb_model_value: float | None = None # pure Justified P/B value (pre-blend)
     ddm_weight: float | None = None     # payout-derived weight on the DDM component
+
+    # Tangible-book transparency (Phase 3B-i, Commit 1)
+    total_book_value_per_share: float | None = None  # pre-tangible (total equity)
+    book_basis: str = "total_no_goodwill_data"       # how the book was resolved
 
 
 def h_model_ddm(
@@ -227,6 +233,30 @@ def _build_sensitivity(
     )
 
 
+def _tangible_equity_series(balance: pd.DataFrame) -> tuple[pd.Series, str]:
+    """Tangible common equity per period — the correct base for a bank's P/B
+    spread valuation (acquisition goodwill/intangibles earn no return, so
+    including them understates ROE and depresses the justified multiple).
+
+    Resolution order, with the basis returned for transparency:
+      1. ``tangible_reported``     — Yahoo's reported Tangible Book Value;
+      2. ``tangible_derived``      — total equity − goodwill & intangibles;
+      3. ``total_no_goodwill_data``— total equity (clean names with no goodwill
+         line are then identical to before).
+    """
+    tbv = _col(balance, "tangible_book_value").dropna()
+    if not tbv.empty:
+        return tbv, "tangible_reported"
+    equity = _col(balance, "stockholders_equity")
+    gw = _col(balance, "goodwill_and_intangibles")
+    if not equity.dropna().empty and not gw.dropna().empty:
+        common = equity.index.intersection(gw.index)
+        tang = (equity.loc[common] - gw.loc[common]).dropna() if len(common) else pd.Series(dtype=float)
+        if not tang.empty:
+            return tang, "tangible_derived"
+    return equity.dropna(), "total_no_goodwill_data"
+
+
 def run_financial_valuation(
     profile: dict,
     financials: dict[str, pd.DataFrame],
@@ -267,12 +297,13 @@ def run_financial_valuation(
     # --- Cost of equity ---
     ke = _compute_ke(profile, config)
 
-    # --- Book value ---
-    equity_s = _col(balance, "stockholders_equity")
-    bv_latest = _latest(equity_s)
+    # --- Book value: tangible common equity (ROTE / P-TBV) ---
+    tangible_series, book_basis = _tangible_equity_series(balance)
+    total_equity_latest = _latest(_col(balance, "stockholders_equity"))
+    bv_latest = _latest(tangible_series)
 
     if bv_latest is None or bv_latest <= 0:
-        # Attempt from profile P/B
+        # Attempt from profile P/B (a total-book proxy — no tangible split here)
         pb = profile.get("price_to_book")
         price = profile.get("current_price")
         if pb and pb > 0 and price and price > 0:
@@ -280,33 +311,38 @@ def run_financial_valuation(
             bv_latest = bv_per_share * shares
             fallback_note += "Book value derived from price / P/B. "
             is_fallback = True
+            book_basis = "price_to_book_fallback"
         else:
             raise ValueError("Book value unavailable for financial valuation")
 
     bv_per_share = bv_latest / shares
+    total_bv_per_share = (
+        total_equity_latest / shares
+        if total_equity_latest and total_equity_latest > 0
+        else bv_per_share
+    )
 
-    # --- ROE ---
+    # --- ROE on tangible equity (Return on Tangible Equity) ---
     roe: float | None = None
-
-    # Method 1: multi-year average from statements
-    eq_series = _col(balance, "stockholders_equity")
     ni_series = _col(income, "net_income")
-    if not eq_series.empty and not ni_series.empty:
-        common = eq_series.index.intersection(ni_series.index)
+
+    # Method 1: multi-year average ROTE from statements
+    if not tangible_series.empty and not ni_series.empty:
+        common = tangible_series.index.intersection(ni_series.index)
         if len(common) >= 2:
-            roe_vals = ni_series.loc[common] / eq_series.loc[common]
+            roe_vals = ni_series.loc[common] / tangible_series.loc[common]
             valid_roe = roe_vals.dropna()
             valid_roe = valid_roe[valid_roe.between(-0.5, 0.5)]
             if not valid_roe.empty:
                 roe = float(valid_roe.mean())
 
-    # Method 2: latest year
+    # Method 2: latest year (tangible)
     if roe is None:
         ni_latest = _latest(ni_series)
         if ni_latest is not None and bv_latest > 0:
             roe = ni_latest / bv_latest
 
-    # Method 3: profile
+    # Method 3: profile (Yahoo returnOnEquity — total-equity basis, last resort)
     if roe is None:
         roe_profile = profile.get("return_on_equity")
         if roe_profile is not None and math.isfinite(roe_profile):
@@ -407,4 +443,6 @@ def run_financial_valuation(
         ddm_h=h_half_life,
         pb_model_value=pb_value,
         ddm_weight=ddm_weight,
+        total_book_value_per_share=total_bv_per_share,
+        book_basis=book_basis,
     )

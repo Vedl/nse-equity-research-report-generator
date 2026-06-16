@@ -451,6 +451,8 @@ def _build_research(ticker_ns: str) -> dict:
             "ddm_value_per_share":   _clean(fin.ddm_value_per_share),
             "ddm_weight":            _clean(fin.ddm_weight),
             "book_value_per_share":  _clean(fin.book_value_per_share),
+            "total_book_value_per_share": _clean(fin.total_book_value_per_share),
+            "book_basis":            fin.book_basis,
             "cost_of_equity":        _clean(fin.cost_of_equity),
             "roe":                   _clean(fin.roe),
             "growth_rate":           _clean(fin.growth_rate),
