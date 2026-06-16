@@ -78,14 +78,8 @@ class FinancialValuationResult:
     is_fallback: bool
     fallback_note: str
 
-    # H-Model DDM (CFA L2 Equity, Reading 23: Discounted Dividend Valuation)
-    ddm_value_per_share: float | None = None
-    ddm_dps0: float | None = None       # current DPS used as D0
-    ddm_g_short: float | None = None    # near-term growth gS
-    ddm_g_long: float | None = None     # terminal growth gL
-    ddm_h: float | None = None          # half-life of the fade (years)
-    pb_model_value: float | None = None # pure Justified P/B value (pre-blend)
-    ddm_weight: float | None = None     # payout-derived weight on the DDM component
+    # The ROTE-based justified-P/B value == intrinsic (no dividend-only DDM blend).
+    pb_model_value: float | None = None
 
     # Tangible-book transparency (Phase 3B-i, Commit 1)
     total_book_value_per_share: float | None = None  # pre-tangible (total equity)
@@ -97,30 +91,6 @@ class FinancialValuationResult:
     forward_roe: float | None = None                 # fwd EPS / projected tangible book
     forward_eps: float | None = None                 # consensus forward EPS used
     projected_tangible_book_per_share: float | None = None
-
-
-def h_model_ddm(
-    dps0: float,
-    g_short: float,
-    g_long: float,
-    half_life: float,
-    cost_of_equity: float,
-) -> float:
-    """H-Model: V = [D0×(1+gL) + D0×H×(gS−gL)] / (r − gL).
-
-    # CFA L2 Equity, Reading 23: Discounted Dividend Valuation — H-Model.
-    Growth fades linearly from g_short to g_long over 2H years.
-
-    Raises:
-        ValueError: if cost_of_equity ≤ g_long (undefined perpetuity).
-    """
-    if cost_of_equity <= g_long:
-        raise ValueError(
-            f"Ke ({cost_of_equity:.2%}) must exceed long-run growth ({g_long:.2%})"
-        )
-    return (dps0 * (1.0 + g_long) + dps0 * half_life * (g_short - g_long)) / (
-        cost_of_equity - g_long
-    )
 
 
 def justified_pb(roe: float, growth: float, cost_of_equity: float) -> float:
@@ -136,35 +106,9 @@ def justified_pb(roe: float, growth: float, cost_of_equity: float) -> float:
     return max(0.1, min(10.0, pb))
 
 
-# Cap on the dividend-DDM blend weight: even a 100%-payout name keeps some weight
-# on the retention-aware ROE-spread model (a pure DDM is fragile to the dividend
-# assumption).
-_DDM_MAX_WEIGHT = 0.80
-
 # Minimum spread of Ke over terminal g in the normalized path — keeps the
 # (Ke − g) denominator from collapsing (the spread floor required for stability).
 _MIN_KE_G_SPREAD = 0.02
-
-
-def payout_weighted_blend(
-    pb_value: float,
-    ddm_value: float | None,
-    payout_ratio: float,
-    max_ddm_weight: float = _DDM_MAX_WEIGHT,
-) -> tuple[float, float]:
-    """Blend the ROE-spread (justified-P/B) and dividend-DDM values by payout.
-
-    A dividend-only DDM is valid only to the extent earnings are actually
-    distributed, so its weight tracks the payout ratio: a high-payout bank is
-    valued mostly off the DDM (where it holds), while a high-retention bank is
-    valued off the retention-aware ROE-spread model (justified P/B already prices
-    reinvested earnings via g = retention × ROE).  Continuous in payout — no
-    arbitrary cutoff.  Returns ``(intrinsic, ddm_weight)``.
-    """
-    if ddm_value is None:
-        return pb_value, 0.0
-    w = max(0.0, min(payout_ratio, max_ddm_weight))
-    return (1.0 - w) * pb_value + w * ddm_value, w
 
 
 def _compute_ke(profile: dict, config: AppConfig) -> float:
@@ -429,32 +373,16 @@ def run_financial_valuation(
     pb_justified = justified_pb(roe, sustainable_g, ke)
     pb_value = pb_justified * bv_per_share
 
-    # --- H-Model DDM (blended 50/50 with Justified P/B when DPS available) ---
-    # # CFA L2 Equity, Reading 23: H-Model — growth fades from gS to gL over 2H years
-    ddm_value: float | None = None
-    dps0: float | None = None
-    g_long = min(config.dcf.terminal_growth_rate, ke - 0.01)
-    h_half_life = 5.0   # 10-year linear fade
-    # Guard: a dividend yield above ~25% is implausible (a mis-scaled feed); skip
-    # the DDM blend rather than let an exploded DPS0 inflate the intrinsic value.
-    if div_yield and price and price > 0 and float(div_yield) <= 0.25:
-        dps0 = float(div_yield) * float(price)
-        if dps0 > 0 and ke > g_long:
-            try:
-                ddm_value = h_model_ddm(dps0, sustainable_g, g_long, h_half_life, ke)
-                if ddm_value <= 0:
-                    ddm_value = None
-            except ValueError as exc:
-                logger.warning("H-Model DDM failed: %s", exc)
-                ddm_value = None
-
-    intrinsic, ddm_weight = payout_weighted_blend(pb_value, ddm_value, payout_ratio)
-    if ddm_value is not None:
-        logger.info(
-            "Bank intrinsic: payout-weighted blend (DDM w=%.2f) of Justified P/B "
-            "(%.2f) and H-Model DDM (%.2f) → %.2f",
-            ddm_weight, pb_value, ddm_value, intrinsic,
-        )
+    # --- Intrinsic value IS the ROTE-based justified-P/B value ---
+    # No dividend-only DDM blend (Phase 3B-ii): (ROE − g)/(Ke − g) is already
+    # retention-complete — it prices BOTH the paid-out dividends and the value of
+    # retained earnings (through g), so a dividend-only H-model would be a
+    # downward-biased SUBSET of this value, not an independent cross-check.  For a
+    # high-retention compounder it captures only the ~payout fraction and ignores
+    # the retained earnings that compound book.  The genuine independent checks —
+    # peer P/TBV (via the conviction blend) and analyst consensus — are surfaced
+    # separately, never folded into this number.
+    intrinsic = pb_value
     equity_value = intrinsic * shares
 
     # --- Sensitivity table ---
@@ -487,13 +415,7 @@ def run_financial_valuation(
         bank_metrics=bank_metrics,
         is_fallback=is_fallback,
         fallback_note=fallback_note,
-        ddm_value_per_share=ddm_value,
-        ddm_dps0=dps0,
-        ddm_g_short=sustainable_g,
-        ddm_g_long=g_long,
-        ddm_h=h_half_life,
         pb_model_value=pb_value,
-        ddm_weight=ddm_weight,
         total_book_value_per_share=total_bv_per_share,
         book_basis=book_basis,
         roe_basis=roe_basis,

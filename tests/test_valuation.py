@@ -8,7 +8,6 @@ Altman zoning, H-Model DDM, blending/rating/confidence, and ₹ formatting.
 
 from __future__ import annotations
 
-import math
 
 import pandas as pd
 import pytest
@@ -23,7 +22,7 @@ from equity_research.analysis.dcf import (
     terminal_value,
     two_stage_growth_schedule,
 )
-from equity_research.analysis.financial_sector import h_model_ddm, run_financial_valuation
+from equity_research.analysis.financial_sector import run_financial_valuation
 from equity_research.analysis.quality import (
     altman_z_score,
     beneish_m_score,
@@ -279,20 +278,6 @@ def test_altman_not_applicable_for_financials() -> None:
 # ---------------------------------------------------------------------------
 # 10. H-Model DDM known answer
 # ---------------------------------------------------------------------------
-
-
-def test_h_model_known_answer() -> None:
-    """CFA L2 H-Model: D0=10, gS=15%, gL=5%, H=5, r=12%.
-
-    V = [10×1.05 + 10×5×(0.15−0.05)] / (0.12−0.05) = (10.5+5)/0.07 = 221.43
-    """
-    v = h_model_ddm(dps0=10.0, g_short=0.15, g_long=0.05, half_life=5.0, cost_of_equity=0.12)
-    assert v == pytest.approx(221.4285, abs=0.01)
-
-
-def test_h_model_rejects_growth_above_ke() -> None:
-    with pytest.raises(ValueError):
-        h_model_ddm(10.0, 0.15, 0.13, 5.0, 0.12)
 
 
 # ---------------------------------------------------------------------------
