@@ -11,8 +11,7 @@ Replaces the old ``valuation_summary()`` with ``run_valuation()`` which:
 from __future__ import annotations
 
 import logging
-import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import pandas as pd
 
@@ -30,7 +29,6 @@ from equity_research.analysis.relative_valuation import (
 from equity_research.analysis.residual_income import RIResult, run_residual_income
 from equity_research.analysis.sotp import (
     SOTPResult,
-    ConglomerateConfig,
     parse_conglomerates_config,
     run_sotp,
 )
@@ -40,9 +38,7 @@ from equity_research.analysis.india_valuation import (
     build_india_inputs,
 )
 from equity_research.analysis.router import (
-    Confidence,
     ModelRoute,
-    RouteDecision,
     route_model,
 )
 from equity_research.analysis.ratios import _col, _latest
@@ -96,8 +92,11 @@ class ValuationResult:
     # Proprietary India valuation output
     india_result: IndiaValuationResult | None = None
 
-    # Broker consensus
+    # Broker consensus (surfaced as a cross-check, never a convergence target)
     broker_target_price: float | None = None
+    broker_target_median: float | None = None
+    broker_target_low: float | None = None
+    broker_target_high: float | None = None
     broker_recommendation: str | None = None
     broker_analyst_count: int | None = None
     broker_upside_pct: float | None = None
@@ -363,6 +362,9 @@ def run_valuation(
 
     # --- Step 6: Broker consensus comparison ---
     broker_target_price = profile.get("target_mean_price")
+    broker_target_median = profile.get("target_median_price")
+    broker_target_low = profile.get("target_low_price")
+    broker_target_high = profile.get("target_high_price")
     broker_recommendation = profile.get("recommendation_key")
     broker_analyst_count = profile.get("number_of_analyst_opinions")
     
@@ -393,6 +395,9 @@ def run_valuation(
         comps_result=comps_result,
         india_result=india_res,
         broker_target_price=broker_target_price,
+        broker_target_median=broker_target_median,
+        broker_target_low=broker_target_low,
+        broker_target_high=broker_target_high,
         broker_recommendation=broker_recommendation,
         broker_analyst_count=broker_analyst_count,
         broker_upside_pct=broker_upside_pct,

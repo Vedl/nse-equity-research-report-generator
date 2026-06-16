@@ -218,6 +218,15 @@ _BALANCE_MAP: dict[str, list[str]] = {
         "Common Stock Equity",
     ],
     "net_ppe": ["Net PPE", "Net Property Plant And Equipment"],
+    # Tangible common equity inputs (bank ROTE / P-TBV — acquisition goodwill
+    # earns no return).  ``tangible_book_value`` is Yahoo's directly-reported
+    # figure; ``goodwill_and_intangibles`` lets us derive it when that row is
+    # absent (tangible = stockholders_equity − goodwill − intangibles).
+    "tangible_book_value": ["Tangible Book Value", "Net Tangible Assets"],
+    "goodwill_and_intangibles": [
+        "Goodwill And Other Intangible Assets",
+        "Goodwill",
+    ],
     # Extended fields for quality screens (Piotroski / Beneish / Altman / CCC)
     "accounts_payable": ["Accounts Payable", "Payables"],
     "long_term_debt": ["Long Term Debt And Capital Lease Obligation", "Long Term Debt"],
@@ -277,7 +286,11 @@ _PROFILE_KEYS: list[tuple[str, str]] = [
     ("trailing_eps", "trailingEps"),
     ("enterprise_to_ebitda", "enterpriseToEbitda"),
     ("enterprise_to_revenue", "enterpriseToRevenue"),
+    ("forward_eps", "forwardEps"),
     ("target_mean_price", "targetMeanPrice"),
+    ("target_median_price", "targetMedianPrice"),
+    ("target_low_price", "targetLowPrice"),
+    ("target_high_price", "targetHighPrice"),
     ("recommendation_key", "recommendationKey"),
     ("number_of_analyst_opinions", "numberOfAnalystOpinions"),
     ("held_percent_insiders", "heldPercentInsiders"),
