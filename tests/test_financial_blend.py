@@ -42,11 +42,15 @@ def test_intrinsic_is_the_justified_pb_value_trailing():
     assert r.pb_model_value == pytest.approx(r.justified_pb * r.book_value_per_share)
 
 
-def test_intrinsic_is_the_justified_pb_value_forward():
+def test_forward_path_two_stage_has_no_ddm_drag():
+    # The forward path uses the two-stage RI value (Phase 3B-iii). It still carries
+    # no dividend-only DDM: a value-creator is never dragged BELOW its single-stage
+    # justified-P/B value (the old DDM blend used to pull it down).
     r = run_financial_valuation(_profile(forward_eps=1.6), _financials(), _CFG)
     assert r.roe_basis == "forward_normalized"
-    assert r.intrinsic_value_per_share == pytest.approx(r.pb_model_value)
-    assert r.pb_model_value == pytest.approx(r.justified_pb * r.book_value_per_share)
+    assert r.valuation_method == "two_stage_ri"
+    assert r.single_stage_value == pytest.approx(r.justified_pb * r.book_value_per_share)
+    assert r.intrinsic_value_per_share >= r.single_stage_value      # uplift, no DDM drag
 
 
 def test_high_dividend_is_not_dragged_below_the_justified_pb():

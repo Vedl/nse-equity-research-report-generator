@@ -69,6 +69,7 @@ class GuardrailsConfig:
     terminal_value_max_share: float = 0.75   # PV(TV)/EV above this → flag
     implied_exit_multiple_low: float = 4.0   # implied terminal EV/EBITDA floor
     implied_exit_multiple_high: float = 25.0  # implied terminal EV/EBITDA ceiling
+    implied_exit_ptbv_high: float = 4.0      # two-stage bank: implied exit P/TBV ceiling
 
 
 @dataclass
@@ -175,6 +176,7 @@ def load_config(path: Path | str = _DEFAULT_CONFIG_PATH) -> AppConfig:
             terminal_value_max_share=float(g.get("terminal_value_max_share", 0.75)),
             implied_exit_multiple_low=float(g.get("implied_exit_multiple_low", 4.0)),
             implied_exit_multiple_high=float(g.get("implied_exit_multiple_high", 25.0)),
+            implied_exit_ptbv_high=float(g.get("implied_exit_ptbv_high", 4.0)),
         )
     except KeyError as exc:
         raise ValueError(f"Missing required config key: {exc}") from exc

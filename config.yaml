@@ -20,6 +20,7 @@ guardrails:                          # valuation plausibility flags (diagnostics
   terminal_value_max_share: 0.75    # flag if PV(terminal) / EV exceeds this
   implied_exit_multiple_low: 4.0    # flag if implied terminal EV/EBITDA below this
   implied_exit_multiple_high: 25.0  # flag if implied terminal EV/EBITDA above this
+  implied_exit_ptbv_high: 4.0       # two-stage bank: flag if implied exit P/TBV above this
 
 router:
   capex_intensity_threshold: 0.25    # capex/revenue ratio above which company is "capex-heavy"
