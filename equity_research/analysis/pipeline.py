@@ -576,6 +576,13 @@ def run_research_pipeline(
                 sensitivity=sensitivity_payload,
                 discount_driver=(vs.discount_driver if vs is not None else None),
                 scenarios_note=(vs.note if vs is not None else None),
+                broker=({
+                    "target_mean": val.broker_target_price,
+                    "target_low": val.broker_target_low,
+                    "target_high": val.broker_target_high,
+                    "analyst_count": val.broker_analyst_count,
+                    "recommendation": val.broker_recommendation,
+                } if val.broker_target_price else None),
             )),
             lambda: None,
         )

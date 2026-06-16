@@ -7,8 +7,12 @@ The correct model for banks, NBFCs, insurance, and financial services:
 Where:
     ROE = Return on Tangible Equity (ROTE) — book is tangible common equity
           (total equity − goodwill − intangibles), the correct bank base since
-          acquisition goodwill earns no return.
-    g   = sustainable growth rate = ROE × retention ratio
+          acquisition goodwill earns no return.  Where a consensus forward EPS
+          exists the ROE is normalized to forward EPS ÷ projected tangible book
+          (projected = current tangible book + retained forward earnings); else
+          it falls back to trailing ROTE and the guardrail stays.
+    g   = a capped sustainable terminal assumption, kept safely below Ke (NOT
+          retention × ROE, which would push g onto Ke for high-ROE banks).
     Ke  = cost of equity via CAPM (Rf + β × ERP)
 
 This is CFA Level 2, Equity Valuation (Reading 25).
@@ -87,6 +91,13 @@ class FinancialValuationResult:
     total_book_value_per_share: float | None = None  # pre-tangible (total equity)
     book_basis: str = "total_no_goodwill_data"       # how the book was resolved
 
+    # Forward-ROE normalization (Phase 3B-i, Commit 2)
+    roe_basis: str = "trailing"                      # "forward_normalized" | "trailing"
+    trailing_roe: float | None = None                # trailing ROTE (fallback level)
+    forward_roe: float | None = None                 # fwd EPS / projected tangible book
+    forward_eps: float | None = None                 # consensus forward EPS used
+    projected_tangible_book_per_share: float | None = None
+
 
 def h_model_ddm(
     dps0: float,
@@ -129,6 +140,10 @@ def justified_pb(roe: float, growth: float, cost_of_equity: float) -> float:
 # on the retention-aware ROE-spread model (a pure DDM is fragile to the dividend
 # assumption).
 _DDM_MAX_WEIGHT = 0.80
+
+# Minimum spread of Ke over terminal g in the normalized path — keeps the
+# (Ke − g) denominator from collapsing (the spread floor required for stability).
+_MIN_KE_G_SPREAD = 0.02
 
 
 def payout_weighted_blend(
@@ -322,8 +337,8 @@ def run_financial_valuation(
         else bv_per_share
     )
 
-    # --- ROE on tangible equity (Return on Tangible Equity) ---
-    roe: float | None = None
+    # --- Trailing ROE on tangible equity (ROTE) — fallback when no estimate ---
+    trailing_roe: float | None = None
     ni_series = _col(income, "net_income")
 
     # Method 1: multi-year average ROTE from statements
@@ -334,30 +349,29 @@ def run_financial_valuation(
             valid_roe = roe_vals.dropna()
             valid_roe = valid_roe[valid_roe.between(-0.5, 0.5)]
             if not valid_roe.empty:
-                roe = float(valid_roe.mean())
+                trailing_roe = float(valid_roe.mean())
 
     # Method 2: latest year (tangible)
-    if roe is None:
-        ni_latest = _latest(ni_series)
-        if ni_latest is not None and bv_latest > 0:
-            roe = ni_latest / bv_latest
+    if trailing_roe is None:
+        ni0 = _latest(ni_series)
+        if ni0 is not None and bv_latest > 0:
+            trailing_roe = ni0 / bv_latest
 
     # Method 3: profile (Yahoo returnOnEquity — total-equity basis, last resort)
-    if roe is None:
+    if trailing_roe is None:
         roe_profile = profile.get("return_on_equity")
         if roe_profile is not None and math.isfinite(roe_profile):
-            roe = float(roe_profile)
+            trailing_roe = float(roe_profile)
 
     # Method 4: absolute fallback
-    if roe is None or not math.isfinite(roe):
-        roe = ke + 0.02  # assume marginal value creator
+    if trailing_roe is None or not math.isfinite(trailing_roe):
+        trailing_roe = ke + 0.02  # assume marginal value creator
         fallback_note += "ROE unavailable — assumed Ke + 2%. "
         is_fallback = True
 
-    # Clamp ROE to [-5%, 40%]
-    roe = max(-0.05, min(0.40, roe))
+    trailing_roe = max(-0.05, min(0.40, trailing_roe))
 
-    # --- Payout ratio & sustainable growth ---
+    # --- Payout & retention (needed for the projected-book forward ROE) ---
     div_yield = profile.get("dividend_yield")
     price = profile.get("current_price")
     ni_latest = _latest(ni_series) if not ni_series.empty else None
@@ -367,12 +381,49 @@ def run_financial_valuation(
     else:
         payout_ratio = 0.30  # banks typically pay ~30%
     retention = 1.0 - payout_ratio
-    sustainable_g = roe * retention
 
-    # Cap growth at Rf + 2% to avoid absurd terminal value
-    sustainable_g = min(sustainable_g, config.market.risk_free_rate + 0.02)
-    # Ensure growth < cost of equity
-    sustainable_g = min(sustainable_g, ke - 0.005)
+    # --- Normalized forward ROE (Phase 3B-i, Commit 2) ---
+    # forward ROE = forward EPS / PROJECTED tangible book, where
+    #   projected tangible book = current tangible book/share + retained EPS
+    #   retained EPS            = (1 − payout) × forward EPS
+    # Projected (not trailing) book so the year's retained earnings don't overstate
+    # the ratio.  Replaces the trailing ROTE in the justified P/B where a forward
+    # EPS exists; otherwise we fall back to trailing and keep the guardrail —
+    # honest degradation, never a fabricated estimate.
+    forward_eps = profile.get("forward_eps")
+    forward_roe: float | None = None
+    projected_tangible_book_ps: float | None = None
+    if (
+        forward_eps is not None
+        and isinstance(forward_eps, (int, float))
+        and math.isfinite(forward_eps)
+        and forward_eps > 0
+        and bv_per_share > 0
+    ):
+        projected_tangible_book_ps = bv_per_share + retention * float(forward_eps)
+        if projected_tangible_book_ps > 0:
+            forward_roe = float(forward_eps) / projected_tangible_book_ps
+
+    if forward_roe is not None and math.isfinite(forward_roe):
+        roe = max(-0.05, min(0.40, forward_roe))
+        roe_basis = "forward_normalized"
+    else:
+        roe = trailing_roe
+        roe_basis = "trailing"
+
+    # --- Terminal growth: a capped sustainable assumption, safely below Ke ---
+    # The spread floor is always enforced.  In the normalized path g is a capped,
+    # documented terminal assumption (Yahoo carries no LTG) — deliberately NOT
+    # retention × ROE, which for high-ROE/high-retention banks pushes g onto Ke
+    # and re-explodes the (Ke − g) denominator.  The trailing fallback keeps the
+    # retention-implied growth, also capped below Ke.
+    if roe_basis == "forward_normalized":
+        sustainable_g = min(config.dcf.terminal_growth_rate, config.market.risk_free_rate + 0.02)
+        sustainable_g = max(0.0, min(sustainable_g, ke - _MIN_KE_G_SPREAD))
+    else:
+        sustainable_g = trailing_roe * retention
+        sustainable_g = min(sustainable_g, config.market.risk_free_rate + 0.02)
+        sustainable_g = min(sustainable_g, ke - 0.005)
 
     # --- Justified P/B ---
     pb_justified = justified_pb(roe, sustainable_g, ke)
@@ -445,4 +496,9 @@ def run_financial_valuation(
         ddm_weight=ddm_weight,
         total_book_value_per_share=total_bv_per_share,
         book_basis=book_basis,
+        roe_basis=roe_basis,
+        trailing_roe=trailing_roe,
+        forward_roe=forward_roe,
+        forward_eps=(float(forward_eps) if forward_eps else None),
+        projected_tangible_book_per_share=projected_tangible_book_ps,
     )

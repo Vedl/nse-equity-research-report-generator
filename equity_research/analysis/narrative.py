@@ -129,6 +129,7 @@ class Narrative:
     earnings_quality: str
     risks: str
     what_would_change_the_view: str
+    consensus_cross_check: str          # sell-side beside the model (not adopted)
     thesis: str                         # the full note, all sections composed
     generator: str = "deterministic-template-v1"
     warnings: list[str] = field(default_factory=list)
@@ -402,6 +403,40 @@ def _what_would_change_the_view(
 # ===========================================================================
 
 
+def _consensus_cross_check(broker: dict | None, val: dict) -> str:
+    """Sell-side consensus shown beside the model as a cross-check — never a
+    convergence target.  Consensus forward EPS already feeds the model's forecast;
+    the consensus *target* and *rating* are displayed only for contrast, and the
+    structural bullish skew of sell-side ratings is flagged."""
+    if not broker or not _finite(broker.get("target_mean")):
+        return "Consensus cross-check — analyst consensus not available."
+    target = _fmt_money(broker.get("target_mean"))
+    lo, hi = broker.get("target_low"), broker.get("target_high")
+    rng = f" (range {_fmt_money(lo)}–{_fmt_money(hi)})" if _finite(lo) and _finite(hi) else ""
+    n = broker.get("analyst_count")
+    n_str = f" across {_fmt_int(n)} analysts" if _finite(n) else ""
+    reco = broker.get("recommendation")
+    reco_str = f", rated '{reco}'" if reco else ""
+
+    model_fv, tgt = val.get("target"), broker.get("target_mean")
+    model_money = _fmt_money(model_fv)
+    if _finite(model_fv) and _finite(tgt) and tgt:
+        ratio = model_fv / tgt
+        rel = ("well below" if ratio < 0.85 else "below" if ratio < 0.97
+               else "well above" if ratio > 1.15 else "above" if ratio > 1.03
+               else "broadly in line with")
+        cmp_clause = f"the model's {model_money} fair value sits {rel} consensus"
+    else:
+        cmp_clause = "the model reaches its own value independently"
+
+    return (
+        f"Consensus cross-check — sell-side mean target {target}{rng}{n_str}{reco_str}; "
+        f"{cmp_clause}. Consensus forward EPS feeds the model's forecast, but the "
+        f"sell-side target and rating are a cross-check only, not adopted — sell-side "
+        f"ratings skew structurally bullish."
+    )
+
+
 def generate_narrative(payload: dict) -> Narrative:
     """Compose the structured ER thesis from the payload.
 
@@ -427,8 +462,11 @@ def generate_narrative(payload: dict) -> Narrative:
     quality = _earnings_quality(eq)
     risks = _risks(guardrails, eq)
     change = _what_would_change_the_view(rec, val, tornado)
+    consensus = _consensus_cross_check(payload.get("broker_consensus"), val)
 
-    thesis = "\n\n".join([one_line, approach, drives, hinges, quality, risks, change])
+    thesis = "\n\n".join(
+        [one_line, approach, drives, hinges, quality, risks, change, consensus]
+    )
 
     return Narrative(
         one_line_view=one_line,
@@ -438,6 +476,7 @@ def generate_narrative(payload: dict) -> Narrative:
         earnings_quality=quality,
         risks=risks,
         what_would_change_the_view=change,
+        consensus_cross_check=consensus,
         thesis=thesis,
     )
 
