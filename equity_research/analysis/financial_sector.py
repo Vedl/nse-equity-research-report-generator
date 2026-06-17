@@ -92,6 +92,16 @@ class FinancialValuationResult:
     forward_eps: float | None = None                 # consensus forward EPS used
     projected_tangible_book_per_share: float | None = None
 
+    # Two-stage residual income (Phase 3B-iii)
+    valuation_method: str = "single_stage_pb"        # "two_stage_ri" | "single_stage_pb"
+    single_stage_value: float | None = None          # justified-P/B value (for contrast)
+    explicit_years: int | None = None
+    fade_years: int | None = None
+    terminal_rote: float | None = None
+    terminal_value_share: float | None = None        # PV(terminal RI) / intrinsic
+    implied_exit_ptbv: float | None = None           # terminal equity / terminal book
+    implied_ptbv: float | None = None                # intrinsic / tangible book
+
 
 def justified_pb(roe: float, growth: float, cost_of_equity: float) -> float:
     """CFA L2 Equity — justified P/B via residual income theory.
@@ -109,6 +119,67 @@ def justified_pb(roe: float, growth: float, cost_of_equity: float) -> float:
 # Minimum spread of Ke over terminal g in the normalized path — keeps the
 # (Ke − g) denominator from collapsing (the spread floor required for stability).
 _MIN_KE_G_SPREAD = 0.02
+
+# Two-stage residual-income parameters (Phase 3B-iii).  Fixed, documented, uniform
+# across all financials — NOT fitted to any name's market price.
+_EXPLICIT_YEARS = 5            # high-growth stage at the sourced forward ROTE
+_FADE_YEARS = 5               # linear fade of ROTE toward the sustainable terminal
+# Fraction of the forward excess ROTE (ROTE − Ke) assumed to persist in the
+# terminal — partial mean-reversion of bank excess returns.  Conservative (half).
+_EXCESS_ROTE_PERSISTENCE = 0.5
+
+
+def two_stage_residual_income(
+    tangible_bvps: float,
+    forward_rote: float,
+    cost_of_equity: float,
+    retention: float,
+    terminal_g: float,
+    *,
+    explicit_years: int = _EXPLICIT_YEARS,
+    fade_years: int = _FADE_YEARS,
+) -> dict:
+    """Two-stage residual-income value on tangible book (bank P-TBV).
+
+    V0 = B0 + Σ PV[(ROTE_t − Ke)·B_{t-1}] + PV(terminal residual income).
+
+    Explicit stage: ROTE held at the SOURCED forward ROTE; book compounds at
+    ``retention × forward ROTE`` (the real retained-earnings book growth).  Fade
+    stage: ROTE fades linearly to a terminal ROTE = Ke + persistence×(fwd−Ke);
+    book keeps compounding at ``retention × ROTE_t``.  Terminal: a Gordon residual
+    income growing at ``terminal_g`` (a capped assumption kept below Ke — NOT
+    retention × ROE).  Returns intrinsic, the terminal inputs, and the
+    plausibility diagnostics (terminal-value share, implied exit P/TBV).
+    """
+    ke = cost_of_equity
+    terminal_rote = ke + _EXCESS_ROTE_PERSISTENCE * (forward_rote - ke)
+    b = tangible_bvps
+    pv_ri = 0.0
+    for t in range(1, explicit_years + 1):
+        pv_ri += (forward_rote - ke) * b / (1.0 + ke) ** t
+        b *= 1.0 + retention * forward_rote
+    for j in range(1, fade_years + 1):
+        rote_t = forward_rote + (terminal_rote - forward_rote) * j / fade_years
+        pv_ri += (rote_t - ke) * b / (1.0 + ke) ** (explicit_years + j)
+        b *= 1.0 + retention * rote_t
+
+    n = explicit_years + fade_years
+    terminal_ri = (terminal_rote - ke) * b          # first terminal-year RI on end book
+    tv = terminal_ri / (ke - terminal_g) if ke > terminal_g else 0.0
+    pv_tv = tv / (1.0 + ke) ** n
+    intrinsic = max(0.0, tangible_bvps + pv_ri + pv_tv)
+
+    tv_share = (pv_tv / intrinsic) if intrinsic > 0 else 0.0
+    implied_exit_ptbv = ((b + tv) / b) if b > 0 else 0.0   # terminal equity / terminal book
+    return {
+        "intrinsic": intrinsic,
+        "terminal_rote": terminal_rote,
+        "terminal_g": terminal_g,
+        "terminal_book_value": b,
+        "terminal_value_share": tv_share,
+        "implied_exit_ptbv": implied_exit_ptbv,
+        "implied_ptbv": (intrinsic / tangible_bvps) if tangible_bvps > 0 else 0.0,
+    }
 
 
 def _compute_ke(profile: dict, config: AppConfig) -> float:
@@ -373,16 +444,24 @@ def run_financial_valuation(
     pb_justified = justified_pb(roe, sustainable_g, ke)
     pb_value = pb_justified * bv_per_share
 
-    # --- Intrinsic value IS the ROTE-based justified-P/B value ---
-    # No dividend-only DDM blend (Phase 3B-ii): (ROE − g)/(Ke − g) is already
-    # retention-complete — it prices BOTH the paid-out dividends and the value of
-    # retained earnings (through g), so a dividend-only H-model would be a
-    # downward-biased SUBSET of this value, not an independent cross-check.  For a
-    # high-retention compounder it captures only the ~payout fraction and ignores
-    # the retained earnings that compound book.  The genuine independent checks —
-    # peer P/TBV (via the conviction blend) and analyst consensus — are surfaced
-    # separately, never folded into this number.
-    intrinsic = pb_value
+    # --- Intrinsic value ---
+    # Single-stage justified P/B is retention-complete but caps growth at the
+    # terminal g (~5%); it cannot represent a franchise compounding tangible book
+    # at 12–15% for a high-growth stage.  Where a SOURCED forward ROTE exists we
+    # use a two-stage residual-income value (explicit high-growth stage on the
+    # forward ROTE, fade to a sustainable terminal); otherwise we keep the
+    # single-stage justified-P/B value (honest degradation).  No dividend-only DDM
+    # (removed in 3B-ii) — peer P/TBV and consensus are surfaced separately.
+    two_stage = None
+    if roe_basis == "forward_normalized":
+        two_stage = two_stage_residual_income(
+            bv_per_share, roe, ke, retention, sustainable_g,
+        )
+        intrinsic = two_stage["intrinsic"]
+        valuation_method = "two_stage_ri"
+    else:
+        intrinsic = pb_value
+        valuation_method = "single_stage_pb"
     equity_value = intrinsic * shares
 
     # --- Sensitivity table ---
@@ -423,4 +502,12 @@ def run_financial_valuation(
         forward_roe=forward_roe,
         forward_eps=(float(forward_eps) if forward_eps else None),
         projected_tangible_book_per_share=projected_tangible_book_ps,
+        valuation_method=valuation_method,
+        single_stage_value=pb_value,
+        explicit_years=(_EXPLICIT_YEARS if two_stage else None),
+        fade_years=(_FADE_YEARS if two_stage else None),
+        terminal_rote=(two_stage["terminal_rote"] if two_stage else None),
+        terminal_value_share=(two_stage["terminal_value_share"] if two_stage else None),
+        implied_exit_ptbv=(two_stage["implied_exit_ptbv"] if two_stage else None),
+        implied_ptbv=(two_stage["implied_ptbv"] if two_stage else None),
     )

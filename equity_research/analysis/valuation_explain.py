@@ -332,6 +332,35 @@ def run_guardrails(
                 else g.implied_exit_multiple_low,
             ))
 
+    # (e) two-stage bank residual income: terminal-value share + implied P/TBV
+    # (financial only) — an over-aggressive two-stage result still flags.
+    fin = valuation.financial_result
+    if fin is not None and getattr(fin, "valuation_method", None) == "two_stage_ri":
+        tvs = fin.terminal_value_share
+        if _is_num(tvs) and tvs > g.terminal_value_max_share:
+            diags.append(Diagnostic(
+                code="terminal_value_share", severity="warn",
+                message=f"Terminal value is {tvs:.0%} of intrinsic (> {g.terminal_value_max_share:.0%}) — "
+                        "the two-stage bank value is mostly a terminal-value bet",
+                value=tvs, threshold=g.terminal_value_max_share,
+            ))
+        exit_pb = fin.implied_exit_ptbv
+        if _is_num(exit_pb) and exit_pb > g.implied_exit_ptbv_high:
+            diags.append(Diagnostic(
+                code="implied_exit_ptbv", severity="warn",
+                message=f"Implied exit P/TBV of {exit_pb:.1f}× exceeds the sector-sane "
+                        f"{g.implied_exit_ptbv_high:g}× ceiling — terminal franchise value too aggressive",
+                value=exit_pb, threshold=g.implied_exit_ptbv_high,
+            ))
+        impl_pb = fin.implied_ptbv
+        if _is_num(impl_pb) and impl_pb > g.implied_exit_ptbv_high:
+            diags.append(Diagnostic(
+                code="implied_ptbv", severity="warn",
+                message=f"Implied P/TBV of {impl_pb:.1f}× exceeds the sector-sane "
+                        f"{g.implied_exit_ptbv_high:g}× ceiling",
+                value=impl_pb, threshold=g.implied_exit_ptbv_high,
+            ))
+
     return diags
 
 
