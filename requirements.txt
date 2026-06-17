@@ -13,3 +13,5 @@ pytest==9.0.3
 pytest-cov==7.1.0
 ruff==0.15.15
 scipy==1.17.1
+feedparser==6.0.12
+pysentiment2==0.1.1

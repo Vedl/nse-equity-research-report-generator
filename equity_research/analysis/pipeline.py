@@ -38,6 +38,7 @@ from equity_research.analysis.narrative import (
     generate_narrative,
 )
 from equity_research.analysis.recommendation import Recommendation, decide_recommendation
+from equity_research.data.news import NewsSentimentResult, get_news_sentiment
 from equity_research.analysis.quality import (
     AccrualsResult,
     AltmanResult,
@@ -119,6 +120,7 @@ class ResearchBundle:
     value_driver: ValueDriverResult | None
     recommendation: Recommendation
     narrative: Narrative | None = None
+    news_sentiment: NewsSentimentResult | None = None
 
 
 def _sector_quality_samples(
@@ -495,6 +497,15 @@ def run_research_pipeline(
         models_agree=agree,
     )
 
+    # --- News + LM sentiment (Phase 3C — 24 h cached, pure display context) ---
+    news_sentiment: NewsSentimentResult | None = _safe(
+        "news_sentiment",
+        lambda: get_news_sentiment(
+            ticker, profile.get("long_name") or ticker.replace(".NS", "")
+        ),
+        lambda: None,
+    )
+
     # --- Guardrail-aware recommendation (deterministic; always computed) ---
     recommendation = _safe(
         "recommendation",
@@ -503,6 +514,7 @@ def run_research_pipeline(
             quality_verdict=earnings_quality.verdict,
             guardrail_fired=bool(valuation_explainability.diagnostics),
             has_critical=valuation_explainability.has_critical,
+            news=news_sentiment,
         ),
         lambda: decide_recommendation(
             upside_pct=None, quality_verdict="Unrated", guardrail_fired=False
@@ -607,4 +619,5 @@ def run_research_pipeline(
         value_driver=value_driver,
         recommendation=recommendation,
         narrative=narrative,
+        news_sentiment=news_sentiment,
     )

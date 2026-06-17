@@ -76,6 +76,12 @@ def decide_recommendation(
         notes.append("Broker consensus: pending (Phase 3)")
     if news is None:
         notes.append("News sentiment: pending (Phase 3)")
+    else:
+        # Pure display — sentiment is context only, never alters the call or intrinsic.
+        label = getattr(news, "sentiment_label", "No signal")
+        limited = getattr(news, "limited_coverage", True)
+        suffix = " (limited coverage)" if limited else " (weak, headline-only signal)"
+        notes.append(f"News sentiment: {label}{suffix}")
 
     mos = required_margin_of_safety(verdict, broker=broker, news=news)
     flagged = bool(guardrail_fired or has_critical)

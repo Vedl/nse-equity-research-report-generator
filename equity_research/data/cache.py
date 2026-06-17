@@ -25,9 +25,10 @@ logger = logging.getLogger(__name__)
 _DEFAULT_DIR = Path(__file__).parent.parent.parent / "data" / "cache"
 
 TTL_SECONDS = {
-    "profile": 24 * 3600,        # 24 hours
-    "prices": 24 * 3600,         # 24 hours
+    "profile": 24 * 3600,          # 24 hours
+    "prices": 24 * 3600,           # 24 hours
     "financials": 90 * 24 * 3600,  # 90 days (annual statements)
+    "news": 24 * 3600,             # 24 hours (Phase 3C)
 }
 
 
