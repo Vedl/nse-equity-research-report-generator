@@ -37,9 +37,11 @@ jobs:
         # still written); exit 1 = total failure (nothing to commit).
         # We continue on exit 2 so the partial snapshot is committed; exit 1 aborts.
         run: |
-          python scripts/batch_snapshot.py; code=$?
+          set +e
+          python scripts/batch_snapshot.py
+          code=$?
+          set -e
           if [ $code -eq 1 ]; then exit 1; fi
-          exit 0
 
       - name: Commit snapshot
         run: |
