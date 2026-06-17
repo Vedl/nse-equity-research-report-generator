@@ -21,6 +21,13 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+# Module-level conditional import so tests can patch ``_feedparser`` without
+# feedparser being installed in the test environment (same pattern as pysentiment2).
+try:
+    import feedparser as _feedparser  # type: ignore[import-untyped]
+except ImportError:
+    _feedparser = None  # type: ignore[assignment]
+
 _NEWS_TTL = 24 * 3600    # 24 h; matches cache.TTL_SECONDS["news"]
 _MAX_HEADLINES = 10
 _MIN_HEADLINES_FOR_SIGNAL = 3   # below this → limited_coverage
@@ -82,16 +89,14 @@ def _parse_published(entry: object) -> str:
 
 def _google_news_rss(company_name: str) -> list[NewsItem]:
     """Fetch the Google News RSS for *company_name* and return deduplicated items."""
-    try:
-        import feedparser  # type: ignore[import-untyped]
-    except ImportError:
+    if _feedparser is None:
         logger.warning("feedparser not installed; news sourcing unavailable")
         return []
 
     query = urllib.parse.quote_plus(f'"{company_name}" stock')
     url = _GOOGLE_NEWS_TMPL.format(query=query)
     try:
-        feed = feedparser.parse(url)
+        feed = _feedparser.parse(url)
     except Exception as exc:  # noqa: BLE001
         logger.warning("Google News RSS fetch failed for %s: %s", company_name, exc)
         return []

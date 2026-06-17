@@ -32,7 +32,13 @@ jobs:
       - name: Run batch snapshot
         env:
           CACHE_DIR: /tmp/cache   # ephemeral Railway-style cache
-        run: python scripts/batch_snapshot.py
+        # Exit 0 = all succeeded; exit 2 = partial (some tickers skipped, snapshot
+        # still written); exit 1 = total failure (nothing to commit).
+        # We continue on exit 2 so the partial snapshot is committed; exit 1 aborts.
+        run: |
+          python scripts/batch_snapshot.py; code=$?
+          if [ $code -eq 1 ]; then exit 1; fi
+          exit 0
 
       - name: Commit snapshot
         run: |

@@ -58,6 +58,7 @@ watchlist_ns: list[str] = [
 logger.info("Watchlist: %d tickers", len(watchlist_ns))
 
 results: dict[str, dict] = {}
+skipped: list[tuple[str, str]] = []   # (ticker_ns, reason)
 
 for ticker_ns in watchlist_ns:
     t0 = time.monotonic()
@@ -66,15 +67,33 @@ for ticker_ns in watchlist_ns:
         data["source"] = "snapshot"   # override "live" set by _build_research
         results[ticker_ns] = data
         elapsed = time.monotonic() - t0
-        logger.info("  OK  %-20s  (%.1f s)", ticker_ns, elapsed)
+        logger.info("  OK   %-20s  (%.1f s)", ticker_ns, elapsed)
     except Exception as exc:  # noqa: BLE001
-        logger.warning("  SKIP %-20s — %s", ticker_ns, exc)
+        reason = f"{type(exc).__name__}: {exc}"
+        skipped.append((ticker_ns, reason))
+        logger.warning("  SKIP %-20s — %s", ticker_ns, reason)
 
-logger.info("Snapshot: %d / %d tickers succeeded", len(results), len(watchlist_ns))
+# ── Post-run summary (always logged — a missing name is a demo failure) ──────
+n_ok = len(results)
+n_skip = len(skipped)
+n_total = len(watchlist_ns)
+logger.info("=" * 60)
+logger.info("Snapshot result: %d / %d succeeded, %d skipped", n_ok, n_total, n_skip)
+if skipped:
+    logger.warning("SKIPPED tickers (will fall through to live fetch on API):")
+    for t, reason in skipped:
+        logger.warning("  ✗ %-20s  %s", t, reason)
+else:
+    logger.info("All watchlist tickers succeeded — snapshot is complete.")
+logger.info("=" * 60)
 
 if not results:
-    logger.error("All tickers failed — aborting snapshot write.")
+    logger.error("All %d tickers failed — aborting snapshot write.", n_total)
     sys.exit(1)
 
 save_snapshot(results, watchlist_ns)
-logger.info("Done.")
+logger.info("Snapshot written with %d entries.", n_ok)
+if n_skip > 0:
+    # Exit non-zero so GH Actions marks the step as warning (yellow), not green.
+    # The snapshot is still written with the successful entries.
+    sys.exit(2)
