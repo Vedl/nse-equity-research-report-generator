@@ -16,10 +16,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout main
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: main
+        # No ref: pin — cron always fires from the default branch (main);
+        # workflow_dispatch on any branch checks out that branch.
+        # This lets pre-merge feature-branch dispatches run the branch's code.
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
