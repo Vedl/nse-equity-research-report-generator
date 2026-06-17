@@ -42,13 +42,16 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from equity_research.analysis.pipeline import run_research_pipeline
+from equity_research.analysis.provenance import build_provenance
 from equity_research.analysis.ratios import compute_ratios
 from equity_research.config import load_config
 from equity_research.data import cache as file_cache
+from equity_research.data.snapshot import get_ticker_entry, load_snapshot
 from equity_research.data.yfinance_provider import YFinanceProvider
 from equity_research.report.builder import generate_report
 from equity_research.backtest import run_backtest
 import dataclasses
+import datetime
 import json
 
 # ---------------------------------------------------------------------------
@@ -67,6 +70,7 @@ logger = logging.getLogger(__name__)
 
 _config = load_config()
 _provider = YFinanceProvider(_config)
+_snapshot: dict = load_snapshot()
 
 _NIFTY500_CSV = Path(__file__).parent / "equity_research" / "data" / "nifty500_tickers.csv"
 _nifty500_df: pd.DataFrame = pd.read_csv(_NIFTY500_CSV, dtype=str).fillna("")
@@ -670,6 +674,16 @@ def _build_research(ticker_ns: str) -> dict:
     elapsed = time.monotonic() - t0
     logger.info("Research for %s assembled in %.1f s", ticker_ns, elapsed)
 
+    provenance = build_provenance(
+        ticker=ticker_ns,
+        income=income,
+        balance=balance,
+        cashflow=cashflow,
+        profile=profile,
+        news_result=bundle.news_sentiment,
+    )
+    data_as_of = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+
     coc = bundle.cost_of_capital
     cost_of_capital_out = {
         "wacc":                _clean(coc.wacc),
@@ -822,6 +836,9 @@ def _build_research(ticker_ns: str) -> dict:
         }
 
     return {
+        "data_as_of": data_as_of,
+        "source":     "live",
+        "provenance": provenance,
         "company":    company,
         "conviction": conviction_out,
         "recommendation": recommendation_out,
@@ -1031,6 +1048,13 @@ def research(ticker: str, request: Request) -> dict:
     """
     ticker_ns = _normalize_ticker(ticker)
 
+    # 1. Snapshot (watchlist tickers, fresh < 25 h) — instant, no live fetch
+    snap = get_ticker_entry(_snapshot, ticker_ns)
+    if snap is not None:
+        logger.info("Snapshot hit for %s", ticker_ns)
+        return snap
+
+    # 2. In-memory TTL cache (30 min, populated by previous live fetches)
     cached = _research_cache.get(ticker_ns)
     if cached is not None:
         logger.info("Cache hit for %s", ticker_ns)

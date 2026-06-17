@@ -1,3 +1,36 @@
+watchlist:
+  # Tickers batch-refreshed nightly by .github/workflows/daily-refresh.yml
+  # (without .NS suffix — the batch script normalises them).
+  # Banks
+  - HDFCBANK
+  - ICICIBANK
+  - SBIN
+  - AXISBANK
+  - KOTAKBANK
+  # IT
+  - TCS
+  - INFY
+  - WIPRO
+  - HCLTECH
+  # Industrials / conglomerates
+  - LT
+  - RELIANCE
+  # FMCG
+  - HINDUNILVR
+  - ITC
+  - NESTLEIND
+  # Auto
+  - MARUTI
+  - BAJAJ-AUTO
+  - TATAMOTORS
+  # Pharma
+  - SUNPHARMA
+  - DRREDDY
+  # Energy / infra
+  - NTPC
+  - POWERGRID
+  - COALINDIA
+
 market:
   # Cost-of-equity risk-free build (country risk counted ONCE, in the ERP).
   gsec_yield: 0.068            # India 10Y G-Sec nominal yield (May 2026); env GSEC_YIELD
