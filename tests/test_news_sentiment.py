@@ -76,7 +76,11 @@ def _news_result(label: str, limited: bool = False) -> NewsSentimentResult:
 
 
 def test_empty_feed_returns_limited_coverage():
-    with patch("feedparser.parse", return_value=_make_feed([])):
+    # Patch the module-level _feedparser so feedparser need not be installed in the
+    # test environment.  The production path uses _feedparser.parse(); patching the
+    # module reference is equivalent to patching feedparser.parse globally.
+    with patch("equity_research.data.news._feedparser") as mock_fp:
+        mock_fp.parse.return_value = _make_feed([])
         result = _fetch_and_score("Reliance Industries")
     assert result.limited_coverage is True
     assert result.headlines == []
@@ -87,7 +91,8 @@ def test_thin_feed_two_entries_is_limited():
         {"title": "Headline A", "source": "ET", "link": "http://a"},
         {"title": "Headline B", "source": "BS", "link": "http://b"},
     ]
-    with patch("feedparser.parse", return_value=_make_feed(entries)):
+    with patch("equity_research.data.news._feedparser") as mock_fp:
+        mock_fp.parse.return_value = _make_feed(entries)
         result = _fetch_and_score("HDFC Bank")
     assert result.limited_coverage is True   # < 3 headlines
     assert len(result.headlines) == 2
@@ -98,7 +103,8 @@ def test_sufficient_feed_not_limited():
         {"title": f"Headline {i}", "source": "ET", "link": f"http://h{i}"}
         for i in range(5)
     ]
-    with patch("feedparser.parse", return_value=_make_feed(entries)):
+    with patch("equity_research.data.news._feedparser") as mock_fp:
+        mock_fp.parse.return_value = _make_feed(entries)
         result = _fetch_and_score("TCS")
     assert result.limited_coverage is False
     assert len(result.headlines) == 5
@@ -112,15 +118,17 @@ def test_duplicate_titles_are_deduped():
         {"title": "Fourth headline", "source": "ET", "link": "http://d"},
         {"title": "Fifth headline", "source": "ET", "link": "http://e"},
     ]
-    with patch("feedparser.parse", return_value=_make_feed(entries)):
+    with patch("equity_research.data.news._feedparser") as mock_fp:
+        mock_fp.parse.return_value = _make_feed(entries)
         result = _fetch_and_score("HDFC Bank")
     titles_lower = [h.title.lower() for h in result.headlines]
     assert len(titles_lower) == len(set(titles_lower)), "duplicate titles leaked through"
 
 
 def test_malformed_feed_gracefully_returns_empty():
-    """feedparser.parse raising should degrade to empty result, not crash."""
-    with patch("feedparser.parse", side_effect=Exception("network error")):
+    """_feedparser.parse raising should degrade to empty result, not crash."""
+    with patch("equity_research.data.news._feedparser") as mock_fp:
+        mock_fp.parse.side_effect = Exception("network error")
         result = _fetch_and_score("Some Company")
     assert result.limited_coverage is True
     assert result.headlines == []
@@ -132,24 +140,20 @@ def test_max_headlines_capped_at_10():
         {"title": f"Headline {i}", "source": "ET", "link": f"http://h{i}"}
         for i in range(20)
     ]
-    with patch("feedparser.parse", return_value=_make_feed(entries)):
+    with patch("equity_research.data.news._feedparser") as mock_fp:
+        mock_fp.parse.return_value = _make_feed(entries)
         result = _fetch_and_score("TCS")
     assert len(result.headlines) <= 10
 
 
 def test_feedparser_import_error_returns_empty():
-    """If feedparser is not installed, news sourcing degrades cleanly."""
-    with patch.dict("sys.modules", {"feedparser": None}):
-        items = []
-        try:
-            from equity_research.data import news as _news_mod
-            import importlib
-            importlib.reload(_news_mod)
-            items = _news_mod._google_news_rss("Test Company")
-        except Exception:  # noqa: BLE001
-            pass  # ImportError or reload error — also acceptable
-    # items should be empty list or we got an exception (both are graceful)
-    assert isinstance(items, list)
+    """When _feedparser is None (not installed), _google_news_rss returns [] gracefully."""
+    # Patch the module-level name directly — no reload needed after the news.py
+    # refactor that moved feedparser to a module-level conditional import.
+    with patch("equity_research.data.news._feedparser", None):
+        from equity_research.data.news import _google_news_rss
+        items = _google_news_rss("Test Company")
+    assert items == [], f"Expected [] when feedparser absent, got {items}"
 
 
 # ---------------------------------------------------------------------------
@@ -330,7 +334,7 @@ def test_cache_ttl_registered_as_24h():
 
 
 def test_cache_hit_skips_fetch():
-    """A cached result within TTL must be served without calling feedparser."""
+    """A cached result within TTL must be served without calling _feedparser.parse."""
     ticker = "CACHEDCO.NS"
     sample = NewsSentimentResult(
         headlines=[NewsItem("Cached headline", "ET", "2026-06-16", "http://x")],
@@ -340,9 +344,9 @@ def test_cache_hit_skips_fetch():
     )
     from equity_research.data import cache as file_cache
     file_cache.put(f"{ticker}_news", _serialise(sample))
-    with patch("feedparser.parse") as mock_parse:
+    with patch("equity_research.data.news._feedparser") as mock_fp:
         result = get_news_sentiment(ticker, "Cached Co")
-    mock_parse.assert_not_called()
+    mock_fp.parse.assert_not_called()
     assert result.headlines[0].title == "Cached headline"
 
 
@@ -360,9 +364,10 @@ def test_stale_cache_triggers_fresh_fetch():
         )),
     }))
     try:
-        with patch("feedparser.parse", return_value=_make_feed([])) as mock_parse:
+        with patch("equity_research.data.news._feedparser") as mock_fp:
+            mock_fp.parse.return_value = _make_feed([])
             get_news_sentiment(ticker, "Stale Co")
-        mock_parse.assert_called_once()
+        mock_fp.parse.assert_called_once()
     finally:
         stale_path.unlink(missing_ok=True)
 

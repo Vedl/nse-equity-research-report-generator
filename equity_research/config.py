@@ -109,6 +109,7 @@ class AppConfig:
     report: ReportConfig
     guardrails: GuardrailsConfig = field(default_factory=GuardrailsConfig)
     conglomerates: dict[str, Any] = field(default_factory=dict)  # raw config for SOTP
+    watchlist: list[str] = field(default_factory=list)  # Phase 3D: daily-refresh tickers
 
 
 def load_config(path: Path | str = _DEFAULT_CONFIG_PATH) -> AppConfig:
@@ -204,4 +205,5 @@ def load_config(path: Path | str = _DEFAULT_CONFIG_PATH) -> AppConfig:
     return AppConfig(
         market=market, dcf=dcf, router=router, peers=peers,
         report=report, guardrails=guardrails, conglomerates=conglomerates_raw,
+        watchlist=list(raw.get("watchlist", [])),
     )

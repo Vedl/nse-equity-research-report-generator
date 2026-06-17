@@ -1,0 +1,54 @@
+name: daily-refresh
+
+# Loop guard: only schedule + manual dispatch — no push trigger.
+# The commit this workflow makes to data/snapshots/latest.json will NOT
+# retrigger the workflow (push is absent from the on: block).
+on:
+  schedule:
+    - cron: "30 3 * * *"   # 03:30 UTC = 09:00 IST daily
+  workflow_dispatch:        # manual run from the Actions tab
+
+permissions:
+  contents: write   # needed to commit the snapshot file
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        # No ref: pin — cron always fires from the default branch (main);
+        # workflow_dispatch on any branch checks out that branch.
+        # This lets pre-merge feature-branch dispatches run the branch's code.
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install --quiet -r requirements.txt
+
+      - name: Run batch snapshot
+        env:
+          CACHE_DIR: /tmp/cache   # ephemeral Railway-style cache
+        # Exit 0 = all succeeded; exit 2 = partial (some tickers skipped, snapshot
+        # still written); exit 1 = total failure (nothing to commit).
+        # We continue on exit 2 so the partial snapshot is committed; exit 1 aborts.
+        run: |
+          python scripts/batch_snapshot.py; code=$?
+          if [ $code -eq 1 ]; then exit 1; fi
+          exit 0
+
+      - name: Commit snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/snapshots/latest.json
+          git diff --staged --quiet \
+            && echo "No changes — snapshot identical to previous run." \
+            || git commit -m "chore(snapshot): daily refresh $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+      - name: Push snapshot
+        run: git push
